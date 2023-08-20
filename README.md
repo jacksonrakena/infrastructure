@@ -86,7 +86,6 @@ metadata:
 spec:
   loadBalancerIP: YOUR CLAIMED IP ADDRESS HERE
   externalTrafficPolicy: Cluster
-
 ```
 
 #### Bring everything up
@@ -103,3 +102,8 @@ kubectl apply -k production
 - Generate token: `kubectl create token admin-user -n kubernetes-dashboard`
 - Proxy: `kubectl proxy`
 - Access: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+
+## Copyright
+**&copy; 2023 Jackson Rakena**  
+Use is permitted for educational and personal purposes only.  
+Commercial use is forbidden without written consent of the project author.
