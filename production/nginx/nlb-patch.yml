@@ -1,0 +1,10 @@
+$patch: merge
+apiVersion: v1
+kind: Service
+metadata:
+  name: required-for-kustomize-but-not-used
+  annotations:
+    oci.oraclecloud.com/load-balancer-type: "nlb"
+spec:
+  loadBalancerIP: 158.179.25.151
+  externalTrafficPolicy: Cluster

@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+  name: default-class
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+spec:
+  controller: k8s.io/ingress-nginx
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-name: arthur-sticky-session
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "1800"
+spec:
+  tls:
+    - secretName: rakena-cert
+      hosts:
+        - vault.rakena.co.nz
+        - live.rakena.co.nz
+    - secretName: streamapps-cert
+      hosts:
+        - streamapps.live
+  ingressClassName: default-class
+  rules:
+    - host: vault.rakena.co.nz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80
+    - host: live.rakena.co.nz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: streamapps-server
+                port:
+                  number: 80
+    - host: api-v2.gradekeeper.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gradekeeper-server
+                port:
+                  number: 80
+    - host: streamapps.live
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: streamapps-server
+                port:
+                  number: 80

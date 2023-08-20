@@ -1,0 +1,23 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: oci-free
+provisioner: blockvolume.csi.oraclecloud.com
+parameters:
+  vpusPerGB: "0"
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: arthur-global-data
+spec:
+  storageClassName: "oci-free"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  volumeName: "csi-57c34efd-2ee2-48e8-9d30-6c960576bd44"

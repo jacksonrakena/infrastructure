@@ -1,0 +1,9 @@
+resources:
+  # Volumes
+  - arthur-global-data.yml
+
+  # Applications
+  - apps/galahad.yml
+  - apps/gradekeeper-server.yml
+  - apps/streamapps-server.yml
+  - apps/jacksonbot.yml

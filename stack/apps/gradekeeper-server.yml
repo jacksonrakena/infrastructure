@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gradekeeper-server
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: gradekeeper-server
+  template:
+    metadata:
+      labels:
+        app: gradekeeper-server
+    spec:
+      volumes:
+        - name: gradekeeper-config-mount
+          configMap:
+            name: gradekeeper-config
+      containers:
+        - name: server
+          image: ghcr.io/gradekeeper/server:latest
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: gradekeeper-config-mount
+              mountPath: /.env
+              subPath: .env
+      imagePullSecrets:
+        - name: gh-container-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gradekeeper-server
+  name: gradekeeper-server
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app: gradekeeper-server
+  type: ClusterIP
