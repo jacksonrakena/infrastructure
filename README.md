@@ -36,6 +36,8 @@ graph LR;
  class cluster cluster;
 ```
 This repository contains a complete Kustomize manifest that can bring up all of my self-hosted services, as well as an NGINX ingress (+ controller) and associated services.
+
+This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a fresh cluster. All resources are deployed in their own namespace (`production`/`canary`/`development`) to avoid collisions.	
   
 The only items missing are secrets (`/production/secrets`) that are required to bring up the stack. These are not included for security reasons.
 
