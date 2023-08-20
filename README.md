@@ -1,6 +1,9 @@
 # Jackson's Kubernetes Configuration
-Instructions and resources for running the Arthur kubernetes cluster.
-Arthur is an in-progress development, but I intend for it to run all of my personal services.
+This repository contains a complete Kustomize manifest that can bring up all of my self-hosted services, as well as an NGINX ingress (+ controller) and associated services.
+  
+The only items missing are secrets (`/production/secrets`) that are required to bring up the stack. These are not included for security reasons.
+
+I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you do, you'll need to replace the secrets with your own.
 
 #### Migration status
 - [x] Vaultwarden (https://vault.rakena.co.nz)
@@ -25,9 +28,18 @@ The production stack performs the following:
   - This file must be updated if the claimed IP address changes.
   - This file also adjusts the cluster traffic policy to fix an issue where the Load Balancer couldn't reach nodes in the cluster.
 ### Secrets (`/production/secrets`)
-- This directory contains production-level secrets that the stack depends on.
-#### Regarding /production/secrets/cert-originals
-This folder contains the original certificates for reference. You will need these to make the `yaml` files in `/production/secrets`.
+This directory contains production-level secrets that the stack depends on.  
+These secrets are excluded for security reasons.
+
+| Name | Type | Expected value |
+| ---- | ---- | -------------- |
+| `galahad-pg` (galahad-secret.yaml) | Secret/Opaque | `db`, `username`, and `password` control the username and password for the Galahad Postgres instance. |
+| `gh-container-registry` (gh-container-registry.yaml) | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry |
+| `gradekeeper-config` (gradekeeper-config.yaml) | ConfigMap | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs). |
+| `jacksonbot-config` (jacksonbot-config.yaml) | ConfigMap | Contains a single file key of `jacksonbot.appsettings.json` that contains valid [Jacksonbot configuration](https://github.com/jacksonrakena/jacksonbot/blob/v20/jacksonbot.appsettings.example.json). |
+| `rakena-cert` (rakena-cert.yaml) | Secret/Opaque | Contains the certificate and key for `rakena.co.nz`. |
+| `streamapps-cert` (streamapps-cert.yaml) | Secret/Opaque | Contains the certificate and key for `streamapps.live`. |
+| `streamapps-config` (streamapps-config.yaml) | ConfigMap | Contains the `secrets.json` StreamApps server configuration file. This project is closed-source. |
 
 ## Stack resources overview (`/stack`)
 ### Storage
