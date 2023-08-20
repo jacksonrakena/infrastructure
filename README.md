@@ -41,11 +41,17 @@ The only items missing are secrets (`/production/secrets`) that are required to 
 
 I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you do, you'll need to replace the secrets with your own.
 
-#### Migration status
+#### Lists of thing to do
+**Migrations**
 - [x] Vaultwarden (https://vault.rakena.co.nz)
 - [x] Stream Apps (https://streamapps.live)
 - [x] Jacksonbot (https://github.com/jacksonrakena/jacksonbot)
 - [x] Gradekeeper Nova server (https://github.com/gradekeeper/server)
+
+**Future**
+- [x] Use kustomize(?)
+  - [ ] Investigate using configMapGenerator and secretMapGenerator
+- [ ] Investigate using Helm
 
 ## Production overview (`/production`)
 The production stack performs the following:
