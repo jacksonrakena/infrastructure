@@ -69,7 +69,7 @@ The production stack performs the following:
 - Installs the NGINX Ingress controller from a remote source.
 - Update this file to update the NGINX Ingress controller version.
 - `nlb-patch` patches the controller to request a Network Load Balancer from Oracle instead of a Load Balancer (it's cheaper)
-  - Given that NGINX natively can perform the same tasks of the Network Load Balancer (TLS termination, virtual hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer.
+  - Given that NGINX natively can perform the same tasks of the regular Load Balancer (TLS termination, virtual hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer over the Network Load Balancer.
   - Using the Network Load Balancer also allows us to receive and handle non-HTTP connections over our ingress, in the future.
   - This file must be updated if the claimed IP address changes.
   - This file also adjusts the cluster traffic policy to fix an issue where the Load Balancer couldn't reach nodes in the cluster.
