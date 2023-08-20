@@ -1,4 +1,37 @@
 # Jackson's Kubernetes Configuration
+```mermaid
+graph LR;
+ subgraph cf_tls[Cloudflare TLS];
+ client([Internet])-..->cf[Cloudflare];
+ end;
+ cf-. Oracle <br> Network Load Balancer .->ingress["Ingress<br>(NGINX)"];
+ subgraph cluster[Arthur cluster]
+ ingress;
+ ingress-->gk[Gradekeeper];
+ ingress-->sa[StreamApps];
+ ingress-->vw[Vaultwarden];
+ subgraph galahad["Galahad (single-pod)"]
+ vw;
+ pg[Postgres];
+ vw-->pg;
+ agd[Data volume];
+ vw-->agd;
+ pg-->agd;
+ end
+ gk-->pg;
+ sa-->pg;
+ gk-->gk_twopods[Two pods];
+ sa-->sa_twopods[Two pods];
+ end
+ classDef plain fill:#ddd,stroke:#fff,stroke-width:4px,color:#000;
+ classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
+ classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
+ classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white;
+ class agd,ingress,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
+ class client plain;
+ class cf cloudflare;
+ class cluster cluster;
+```
 This repository contains a complete Kustomize manifest that can bring up all of my self-hosted services, as well as an NGINX ingress (+ controller) and associated services.
   
 The only items missing are secrets (`/production/secrets`) that are required to bring up the stack. These are not included for security reasons.
