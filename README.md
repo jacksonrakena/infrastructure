@@ -10,6 +10,9 @@ graph LR;
  ingress-->gk[Gradekeeper];
  ingress-->sa[StreamApps];
  ingress-->vw[Vaultwarden];
+ jb[Jacksonbot];
+ jb-->jb_onepod[One pod];
+ jb-->pg;
  subgraph galahad["Galahad (single-pod)"]
  vw;
  pg[Postgres];
@@ -27,7 +30,7 @@ graph LR;
  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
  classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
  classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white;
- class agd,ingress,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
+ class agd,jb,jb_onepod,ingress,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
  class client plain;
  class cf cloudflare;
  class cluster cluster;
