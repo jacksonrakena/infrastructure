@@ -32,16 +32,6 @@ spec:
         - streamapps.live
   ingressClassName: default-class
   rules:
-    - host: cloud.rakena.co.nz
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: nextcloud
-                port:
-                  number: 80
     - host: vault.rakena.co.nz
       http:
         paths:
