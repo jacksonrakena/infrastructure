@@ -7,3 +7,4 @@ resources:
   - apps/gradekeeper-server.yml
   - apps/streamapps-server.yml
   - apps/jacksonbot.yml
+  - apps/nextcloud.yml
