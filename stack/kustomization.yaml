@@ -5,7 +5,7 @@ resources:
   # Applications
   - apps/galahad.yml
   - apps/gradekeeper-server.yml
-  # - apps/streamapps-server.yml
+  - apps/streamapps-server.yml
   - apps/jacksonbot.yml
   # - apps/nextcloud.yml
   # - apps/identity.yml

@@ -9,12 +9,14 @@ resources:
 
   # Certificates
   - secrets/rakena-cert.yaml
+  - secrets/streamapps-cert.yaml
 
   # Secrets
   - secrets/gh-container-registry.yaml
   - secrets/galahad-secret.yaml
   - secrets/gradekeeper-config.yaml
   - secrets/jacksonbot-config.yaml
+  - secrets/streamapps-config.yaml
 
   # App stack
   - ../stack
