@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: identity
+  # Template for each Galahad Pod (there is really only one)
+  template:
+    metadata:
+      labels:
+        app: identity
+    spec:
+      containers:
+        - name: logto
+          image: svhd/logto:latest
+          ports:
+            - containerPort: 3001
+            - containerPort: 3002
+          env:
+            - name: TRUST_PROXY_HEADER
+              value: "1"
+            - name: DB_URL
+              value: "postgres://logto:logto@postgres:5432/logto"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: logto
+  name: logto
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 3001
+  selector:
+    app: logto
+  type: ClusterIP
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alteration
+spec:
+  template:
+    spec:
+      containers:
+        - name: alteration
+          image: ghcr.io/logto-io/logto:1.6
+          imagePullPolicy: Always
+          env:
+            - name: CI
+              value: "true"
+            - name: DB_URL
+              value: "postgres://logto:logto@postgres:5432/logto"
+          command:
+            - /bin/sh
+          args:
+            - "-c"
+            - "npm run alteration deploy latest"
+      restartPolicy: Never

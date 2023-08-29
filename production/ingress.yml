@@ -27,6 +27,7 @@ spec:
         - vault.rakena.co.nz
         - live.rakena.co.nz
         - cloud.rakena.co.nz
+        - id.rakena.co.nz
     - secretName: streamapps-cert
       hosts:
         - streamapps.live
