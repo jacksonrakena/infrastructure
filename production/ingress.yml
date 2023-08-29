@@ -63,13 +63,3 @@ spec:
                 name: gradekeeper-server
                 port:
                   number: 80
-    - host: streamapps.live
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: streamapps-server
-                port:
-                  number: 80
