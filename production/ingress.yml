@@ -50,7 +50,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: streamapps-server
+                name: streamapps-shim
                 port:
                   number: 80
     - host: api-v2.gradekeeper.xyz
