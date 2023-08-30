@@ -24,11 +24,11 @@ spec:
         - name: server
           image: ghcr.io/jacksonrakena/streamapps-server:latest
           ports:
-            - containerPort: 80
+            - containerPort: 3000
           volumeMounts:
             - name: streamapps-config-mount
-              mountPath: /app/secrets.json
-              subPath: secrets.json
+              mountPath: /app/.env
+              subPath: .env
       imagePullSecrets:
         - name: gh-container-registry
 ---
@@ -42,7 +42,7 @@ spec:
   ports:
     - port: 80
       protocol: TCP
-      targetPort: 80
+      targetPort: 3000
   selector:
     app: streamapps-server
   type: ClusterIP
