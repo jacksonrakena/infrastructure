@@ -9,4 +9,4 @@ resources:
   - apps/streamapps-shim.yml
   - apps/jacksonbot.yml
   # - apps/nextcloud.yml
-  # - apps/identity.yml
+  - apps/identity.yml

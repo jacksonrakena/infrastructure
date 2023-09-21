@@ -18,6 +18,8 @@ resources:
   - secrets/jacksonbot-config.yaml
   - secrets/streamapps-config.yaml
   - secrets/streamapps-config-shim.yaml
+  - secrets/identity-config.yaml
+  - secrets/identity-env.yaml
 
   # App stack
   - ../stack

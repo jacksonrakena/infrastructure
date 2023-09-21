@@ -33,6 +33,16 @@ spec:
         - streamapps.live
   ingressClassName: default-class
   rules:
+    - host: id.rakena.co.nz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: identity
+                port:
+                  number: 80
     - host: vault.rakena.co.nz
       http:
         paths:
