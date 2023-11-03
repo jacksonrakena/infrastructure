@@ -26,23 +26,11 @@ spec:
       hosts:
         - vault.rakena.co.nz
         - live.rakena.co.nz
-        - cloud.rakena.co.nz
-        - id.rakena.co.nz
     - secretName: streamapps-cert
       hosts:
         - streamapps.live
   ingressClassName: default-class
   rules:
-    - host: id.rakena.co.nz
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: identity
-                port:
-                  number: 80
     - host: vault.rakena.co.nz
       http:
         paths:
@@ -71,15 +59,5 @@ spec:
             backend:
               service:
                 name: gradekeeper-server
-                port:
-                  number: 80
-    - host: streamapps.live
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: streamapps-server
                 port:
                   number: 80
