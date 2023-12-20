@@ -27,6 +27,7 @@ spec:
     - secretName: gitea-le
       hosts:
         - git.jacksonrakena.com
+        - scm.jacksonrakena.com
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
@@ -47,6 +48,16 @@ spec:
                 port:
                   number: 80
     - host: git.jacksonrakena.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitea
+                port:
+                  number: 80
+    - host: scm.jacksonrakena.com
       http:
         paths:
           - path: /
