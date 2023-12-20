@@ -119,6 +119,11 @@ These secrets are excluded for security reasons.
 ## Recipes
 ### Setup production
 The production Kustomize file installs all necessary remote resources, so this recipe assumes an empty Kubernetes cluster.
+#### Cert manager
+You'll need to install cert-manager:
+```
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.yaml
+```
 #### Load balancer setup
 You'll need to edit `production/nginx/nlb-patch.yml` to have your Oracle Load Balancer settings:
 ```yaml

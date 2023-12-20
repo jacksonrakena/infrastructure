@@ -8,3 +8,10 @@ metadata:
 spec:
   loadBalancerIP: 158.179.25.151
   externalTrafficPolicy: Cluster
+  ports:
+    - name: 22-tcp
+      nodePort: 30957
+      port: 22
+      protocol: TCP
+      targetPort: 22
+  type: LoadBalancer

@@ -10,6 +10,7 @@ resources:
   # Certificates
   - secrets/rakena-cert.yaml
   - secrets/streamapps-cert.yaml
+  - ingress-issuer.yaml
 
   # Secrets
   - secrets/gh-container-registry.yaml
@@ -25,4 +26,5 @@ resources:
   - ../stack
 
   # Ingresses
+  - gitea-ingress-config.yaml
   - ingress.yml

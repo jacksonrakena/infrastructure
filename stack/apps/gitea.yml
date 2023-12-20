@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nextcloud-data
+  name: gitea-data
 spec:
   storageClassName: "oci-free"
   accessModes:
@@ -13,42 +13,48 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nextcloud
+  name: gitea
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: nextcloud
+      app: gitea
   template:
     metadata:
       labels:
-        app: nextcloud
+        app: gitea
     spec:
       volumes:
-        - name: nextcloud-data
+        - name: gitea-data
           persistentVolumeClaim:
-            claimName: nextcloud-data
+            claimName: gitea-data
       containers:
-        - name: nextcloud
-          image: nextcloud
+        - name: gitea
+          image: gitea/gitea:1.21.2
           ports:
-            - containerPort: 80
+            - containerPort: 3000
+            - containerPort: 22
           volumeMounts:
-            - name: nextcloud-data
-              mountPath: /var/www/html
-              subPath: nextcloud-data
+            - name: gitea-data
+              mountPath: /data
+              subPath: gitea
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nextcloud
+  name: gitea
 spec:
   ports:
     - port: 80
       protocol: TCP
-      targetPort: 80
+      targetPort: 3000
+      name: http-tcp
+    - port: 22
+      protocol: TCP
+      targetPort: 22
+      name: ssh-tcp
   selector:
-    app: nextcloud
+    app: gitea
   type: ClusterIP

@@ -20,8 +20,13 @@ metadata:
     nginx.ingress.kubernetes.io/session-cookie-name: arthur-sticky-session
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-max-age: "1800"
+    nginx.ingress.kubernetes.io/proxy-body-size: 0
+    cert-manager.io/issuer: "ingress-issuer"
 spec:
   tls:
+    - secretName: gitea-le
+      hosts:
+        - git.jacksonrakena.com
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
@@ -39,6 +44,16 @@ spec:
             backend:
               service:
                 name: vaultwarden
+                port:
+                  number: 80
+    - host: git.jacksonrakena.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitea
                 port:
                   number: 80
     - host: live.rakena.co.nz
