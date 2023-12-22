@@ -28,6 +28,7 @@ spec:
       hosts:
         - git.jacksonrakena.com
         - scm.jacksonrakena.com
+        - scm.j12.dev
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
@@ -52,6 +53,16 @@ spec:
         paths:
           - path: /
             pathType: Prefix
+            backend:
+              service:
+                name: gitea
+                port:
+                  number: 80
+    - host: scm.j12.dev
+      http:
+        paths:
+          - path: /
+            pathType: prefix
             backend:
               service:
                 name: gitea
