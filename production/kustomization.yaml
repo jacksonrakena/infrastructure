@@ -21,6 +21,7 @@ resources:
   - secrets/streamapps-config-shim.yaml
   - secrets/identity-config.yaml
   - secrets/identity-env.yaml
+  - secrets/mc-secret.yaml
 
   # App stack
   - ../stack

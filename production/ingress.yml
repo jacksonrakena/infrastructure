@@ -28,6 +28,7 @@ spec:
       hosts:
         - git.jacksonrakena.com
         - scm.jacksonrakena.com
+        - minecraft-map.jacksonrakena.com
         - scm.j12.dev
     - secretName: rakena-cert
       hosts:
@@ -46,6 +47,26 @@ spec:
             backend:
               service:
                 name: vaultwarden
+                port:
+                  number: 80
+    - host: minecraft-map.jacksonrakena.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitea
+                port:
+                  number: 8080
+    - host: minecraft.jacksonrakena.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitea
                 port:
                   number: 80
     - host: git.jacksonrakena.com

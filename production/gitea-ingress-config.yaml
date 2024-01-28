@@ -4,3 +4,4 @@ metadata:
   name: ingress-nginx-tcp
 data:
   "22": production/gitea:22
+  "25565": production/gitea:25565
