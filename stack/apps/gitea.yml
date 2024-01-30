@@ -34,8 +34,8 @@ spec:
         - name: minecraft
           image: itzg/minecraft-server
           envFrom:
-            - secretRef:
-                name: mc-secret
+            - configMapRef:
+                name: mc-config
           ports:
             - containerPort: 25565
             - containerPort: 8080
