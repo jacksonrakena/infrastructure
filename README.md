@@ -1,15 +1,22 @@
 # Jackson's Kubernetes Configuration
 ```mermaid
 graph LR;
- subgraph cf_tls[Cloudflare TLS];
- client([Internet])-..->cf[Cloudflare];
+ client([Internet]);
+ subgraph cf_tls[Oracle NLB];
+ client-..->cf[Cloudflare];
  end;
- cf-. Oracle <br> Network Load Balancer .->ingress["Ingress<br>(NGINX)"];
+ client-.via Lets Encrypt.->ingress_http["Ingress\n(Lets Encrypt)"];
+ cf-..->ingress["Ingress<br>(NGINX)"];
  subgraph cluster[Arthur cluster]
+ ingress_http;
  ingress;
- ingress-->gk[Gradekeeper];
+ ingress-->gk[Gradekeeper Nova];
  ingress-->sa[StreamApps];
  ingress-->vw[Vaultwarden];
+ ingress_http-->|HTTPS|gitea[Gitea];
+ ingress_http-->|"SSH via CM \ningress-nginx-tcp (unsecured)"|gitea;
+ ingress_http-->|"HTTPS (minecraft-map)"|mc;
+ ingress_http-->|"Port 25565 via CM \ningress-nginx-tcp (unsecured)"|mc[Minecraft];
  jb[Jacksonbot];
  jb-->jb_onepod[One pod];
  jb-->pg;
@@ -17,9 +24,15 @@ graph LR;
  vw;
  pg[Postgres];
  vw-->pg;
- agd[Data volume];
+ agd[50G data volume];
  vw-->agd;
  pg-->agd;
+ end
+ subgraph gitea_sg["Gitea (single-pod)"]
+ gitea;
+ mc;
+ gitea-->gdv[50GB data volume];
+ mc-->gdv;
  end
  gk-->pg;
  sa-->pg;
@@ -30,7 +43,7 @@ graph LR;
  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
  classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
  classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white;
- class agd,jb,jb_onepod,ingress,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
+ class agd,jb,mc,ingress_http,gdv,gitea,jb_onepod,ingress,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
  class client plain;
  class cf cloudflare;
  class cluster cluster;
