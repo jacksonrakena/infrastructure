@@ -38,7 +38,7 @@ spec:
                 name: mc-config
           ports:
             - containerPort: 25565
-            - containerPort: 8080
+            - containerPort: 8123
           volumeMounts:
             - name: gitea-data
               mountPath: /data
@@ -68,7 +68,7 @@ spec:
       name: minecraft
     - port: 8080
       protocol: TCP
-      targetPort: 8080
+      targetPort: 8123
       name: minecraft-map-tcp
     - port: 80
       protocol: TCP
