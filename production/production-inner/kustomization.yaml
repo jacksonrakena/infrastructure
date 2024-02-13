@@ -1,0 +1,43 @@
+commonLabels:
+  release: production
+  author: jacksonrakena
+namespace: production
+
+secretGenerator:
+  - name: galahad-pg
+    envs:
+      - secrets/galahad-secret.env
+  - name: rakena-cert
+    type: "kubernetes.io/tls"
+    files:
+      - secrets/cert-rakena.co.nz/tls.crt
+      - secrets/cert-rakena.co.nz/tls.key
+  - name: gh-container-registry
+    type: kubernetes.io/dockerconfigjson
+    files:
+      - .dockerconfigjson=secrets/docker-registry-config.json
+  - name: streamapps-config-shim
+    files:
+      - secrets.json=secrets/streamapps-shim-config.json
+
+configMapGenerator:
+  - name: mc-config
+    envs:
+      - secrets/mc-config.env
+  - name: jacksonbot-config
+    files:
+      - jacksonbot.appsettings.json=secrets/jacksonbot-config.json
+
+resources:
+  # Nginx
+  - nginx/
+
+  # Let's Encrypt configuration
+  - ingress-issuer.yaml
+
+  # App stack
+  - ../../stack
+
+  # Ingresses
+  - gitea-ingress-config.yaml
+  - ingress.yml

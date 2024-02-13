@@ -1,29 +1,3 @@
-commonLabels:
-  release: production
-  author: jacksonrakena
-namespace: production
-
 resources:
-  # Nginx
-  - nginx/
-
-  # Certificates
-  - secrets/rakena-cert.yaml
-  - secrets/streamapps-cert.yaml
-  - ingress-issuer.yaml
-
-  # Secrets
-  - secrets/gh-container-registry.yaml
-  - secrets/galahad-secret.yaml
-  - secrets/gradekeeper-config.yaml
-  - secrets/jacksonbot-config.yaml
-  - secrets/streamapps-config.yaml
-  - secrets/streamapps-config-shim.yaml
-  - secrets/mc-config.yaml
-
-  # App stack
-  - ../stack
-
-  # Ingresses
-  - gitea-ingress-config.yaml
-  - ingress.yml
+  - https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.yaml
+  - production-inner

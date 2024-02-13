@@ -29,14 +29,10 @@ spec:
         - git.jacksonrakena.com
         - scm.jacksonrakena.com
         - minecraft-map.jacksonrakena.com
-        - scm.j12.dev
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
         - live.rakena.co.nz
-    - secretName: streamapps-cert
-      hosts:
-        - streamapps.live
   ingressClassName: default-class
   rules:
     - host: vault.rakena.co.nz
@@ -79,16 +75,6 @@ spec:
                 name: gitea
                 port:
                   number: 80
-    - host: scm.j12.dev
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: gitea
-                port:
-                  number: 80
     - host: scm.jacksonrakena.com
       http:
         paths:
@@ -109,13 +95,13 @@ spec:
                 name: streamapps-shim
                 port:
                   number: 80
-    - host: api-v2.gradekeeper.xyz
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: gradekeeper-server
-                port:
-                  number: 80
+    # - host: api-v2.gradekeeper.xyz
+    #   http:
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    #         backend:
+    #           service:
+    #             name: gradekeeper-server
+    #             port:
+    #               number: 80

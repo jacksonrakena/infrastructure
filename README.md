@@ -64,8 +64,8 @@ I do not intend for this repository to be used by anyone else (but feel free to 
 - [x] Gradekeeper Nova server (https://github.com/gradekeeper/server)
 
 **Future**
-- [x] Use kustomize(?)
-  - [ ] Investigate using configMapGenerator and secretMapGenerator
+- [x] Use Kustomize
+  - [x] Investigate using configMapGenerator and secretMapGenerator
 - [ ] Investigate using Helm
 
 ## Production overview (`/production`)
@@ -92,13 +92,11 @@ These secrets are excluded for security reasons.
 
 | Name | Type | Expected value |
 | ---- | ---- | -------------- |
-| `galahad-pg` (galahad-secret.yaml) | Secret/Opaque | `db`, `username`, and `password` control the username and password for the Galahad Postgres instance. |
-| `gh-container-registry` (gh-container-registry.yaml) | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry |
-| `gradekeeper-config` (gradekeeper-config.yaml) | ConfigMap | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs). |
-| `jacksonbot-config` (jacksonbot-config.yaml) | ConfigMap | Contains a single file key of `jacksonbot.appsettings.json` that contains valid [Jacksonbot configuration](https://github.com/jacksonrakena/jacksonbot/blob/v20/jacksonbot.appsettings.example.json). |
-| `rakena-cert` (rakena-cert.yaml) | Secret/Opaque | Contains the certificate and key for `rakena.co.nz`. |
-| `streamapps-cert` (streamapps-cert.yaml) | Secret/Opaque | Contains the certificate and key for `streamapps.live`. |
-| `streamapps-config` (streamapps-config.yaml) | ConfigMap | Contains the `secrets.json` StreamApps server configuration file. This project is closed-source. |
+| `galahad-pg` (galahad-secret.env) | Secret/Opaque | `db`, `username`, and `password` control the username and password for the Galahad Postgres instance. |
+| `gh-container-registry` (docker-registry-config.json) | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry |
+| `gradekeeper-config` (gradekeeper-server.env) | ConfigMap | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs). |
+| `jacksonbot-config` (jacksonbot-config.json) | ConfigMap | Contains a single file key of `jacksonbot.appsettings.json` that contains valid [Jacksonbot configuration](https://github.com/jacksonrakena/jacksonbot/blob/v20/jacksonbot.appsettings.example.json). |
+| `rakena-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt) | `kubernetes.io/tls` | Contains the certificate and key for `rakena.co.nz`. |
 
 ## Stack resources overview (`/stack`)
 ### Storage
@@ -132,11 +130,6 @@ These secrets are excluded for security reasons.
 ## Recipes
 ### Setup production
 The production Kustomize file installs all necessary remote resources, so this recipe assumes an empty Kubernetes cluster.
-#### Cert manager
-You'll need to install cert-manager:
-```
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.yaml
-```
 #### Load balancer setup
 You'll need to edit `production/nginx/nlb-patch.yml` to have your Oracle Load Balancer settings:
 ```yaml
