@@ -22,7 +22,7 @@ spec:
             name: gradekeeper-config
       containers:
         - name: server
-          image: ghcr.io/gradekeeper/server:latest
+          image: ghcr.io/jacksonrakena/gradekeeper-server:latest
           ports:
             - containerPort: 3000
           volumeMounts:

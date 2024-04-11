@@ -27,6 +27,9 @@ configMapGenerator:
   - name: jacksonbot-config
     files:
       - jacksonbot.appsettings.json=secrets/jacksonbot-config.json
+  - name: gradekeeper-config
+    files:
+      - .env=secrets/gradekeeper-server.env
 
 resources:
   # Nginx
