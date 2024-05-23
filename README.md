@@ -10,34 +10,26 @@ graph LR;
  subgraph cluster[Arthur cluster]
  ingress_http;
  ingress;
- ingress-->gk[Gradekeeper Nova];
- ingress-->sa[StreamApps];
- ingress-->vw[Vaultwarden];
- ingress_http-->|HTTPS|gitea[Gitea];
+ ingress-->gk["Gradekeeper Server\napi.gradekeeper.xyz"];
+ ingress-->vw["Vaultwarden\nvault.rakena.co.nz"];
+ ingress_http-->|HTTPS|gitea["Gitea\ngit.jacksonrakena.com"];
  ingress_http-->|"SSH via CM \ningress-nginx-tcp (unsecured)"|gitea;
- ingress_http-->|"HTTPS (minecraft-map)"|mc;
- ingress_http-->|"Port 25565 via CM \ningress-nginx-tcp (unsecured)"|mc[Minecraft];
- jb[Jacksonbot];
+ jb["Jacksonbot\nbot.jacksonrakena.com"];
  jb-->jb_onepod[One pod];
  jb-->pg;
  subgraph galahad["Galahad (single-pod)"]
  vw;
- pg[Postgres];
+ pg[Postgres 15];
  vw-->pg;
- agd[50G data volume];
+ agd[50GB data volume];
  vw-->agd;
  pg-->agd;
  end
- subgraph gitea_sg["Gitea (single-pod)"]
  gitea;
- mc;
  gitea-->gdv[50GB data volume];
- mc-->gdv;
- end
+ gitea-->pg;
  gk-->pg;
- sa-->pg;
  gk-->gk_twopods[Two pods];
- sa-->sa_twopods[Two pods];
  end
  classDef plain fill:#ddd,stroke:#fff,stroke-width:4px,color:#000;
  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
@@ -59,9 +51,8 @@ I do not intend for this repository to be used by anyone else (but feel free to 
 #### Lists of thing to do
 **Migrations**
 - [x] Vaultwarden (https://vault.rakena.co.nz)
-- [x] Stream Apps (https://streamapps.live)
 - [x] Jacksonbot (https://github.com/jacksonrakena/jacksonbot)
-- [x] Gradekeeper Nova server (https://github.com/gradekeeper/server)
+- [x] Gradekeeper API server (https://github.com/gradekeeper/server)
 
 **Future**
 - [x] Use Kustomize
@@ -111,11 +102,6 @@ These secrets are excluded for security reasons.
 - Limited to 1 replica due to the nature of the data it controls
 - Runs Vaultwarden as it needs data access
 - Runs PostgreSQL as it needs data access
-#### apps/streamapps-server
-- Runs the StreamApps server.
-- Depends on Galahad
-- 2 replicas, 1 max unavailable
-- Pulls the Docker image from the GitHub container registry
 
 #### apps/jacksonbot
 - Runs Jacksonbot.
