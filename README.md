@@ -5,6 +5,10 @@ graph LR;
  subgraph cf_tls[Oracle NLB];
  client-..->cf[Cloudflare];
  end;
+ subgraph vercel[Vercel];
+ client-->gk_frontend[Gradekeeper Client\napp.gradekeeper.xyz]
+ end;
+ gk_frontend-->gk;
  client-.via Lets Encrypt.->ingress_http["Ingress\n(Lets Encrypt)"];
  cf-..->ingress["Ingress<br>(NGINX)"];
  subgraph cluster[Arthur cluster]
@@ -35,8 +39,9 @@ graph LR;
  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
  classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
  classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white;
- class agd,jb,mc,ingress_http,gdv,gitea,jb_onepod,ingress,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
+ class jb,mc,gitea,jb_onepod,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
  class client plain;
+ class agd,gdv plain;
  class cf cloudflare;
  class cluster cluster;
 ```
