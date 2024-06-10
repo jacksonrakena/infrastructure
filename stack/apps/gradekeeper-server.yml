@@ -16,19 +16,14 @@ spec:
       labels:
         app: gradekeeper-server
     spec:
-      volumes:
-        - name: gradekeeper-config-mount
-          configMap:
-            name: gradekeeper-config
       containers:
         - name: server
           image: ghcr.io/jacksonrakena/gradekeeper-server:latest
           ports:
             - containerPort: 3000
-          volumeMounts:
-            - name: gradekeeper-config-mount
-              mountPath: /.env
-              subPath: .env
+          envFrom:
+            - configMapRef:
+                name: gradekeeper-config
       imagePullSecrets:
         - name: gh-container-registry
 ---

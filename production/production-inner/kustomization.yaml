@@ -25,8 +25,8 @@ configMapGenerator:
     files:
       - jacksonbot.appsettings.json=secrets/jacksonbot-config.json
   - name: gradekeeper-config
-    files:
-      - .env=secrets/gradekeeper-server.env
+    envs:
+      - secrets/gradekeeper-server.env
   - name: streamapps-config-shim
     files:
       - secrets.json=secrets/streamapps-shim-config.json
