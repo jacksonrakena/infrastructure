@@ -36,6 +36,11 @@ spec:
           envFrom:
             - configMapRef:
                 name: mc-config
+          resources:
+            limits:
+              memory: 10Gi
+            requests:
+              memory: 7Gi
           ports:
             - containerPort: 25565
             - containerPort: 8123
