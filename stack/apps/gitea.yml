@@ -31,21 +31,21 @@ spec:
           persistentVolumeClaim:
             claimName: gitea-data
       containers:
-        # - name: minecraft
-        #   image: itzg/minecraft-server
-        #   envFrom:
-        #     - configMapRef:
-        #         name: mc-config
-        #   ports:
-        #     - containerPort: 25565
-        #     - containerPort: 8123
-        #   volumeMounts:
-        #     - name: gitea-data
-        #       mountPath: /data
-        #       subPath: minecraft
-        #     - name: gitea-data
-        #       mountPath: /downloads
-        #       subPath: minecraft-downloads
+        - name: minecraft
+          image: itzg/minecraft-server
+          envFrom:
+            - configMapRef:
+                name: mc-config
+          ports:
+            - containerPort: 25565
+            - containerPort: 8123
+          volumeMounts:
+            - name: gitea-data
+              mountPath: /data
+              subPath: minecraft-vnl2
+            - name: gitea-data
+              mountPath: /downloads
+              subPath: minecraft-downloads-vnl2
         - name: gitea
           image: gitea/gitea:1.21.2
           ports:
