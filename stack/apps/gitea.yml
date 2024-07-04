@@ -43,7 +43,7 @@ spec:
               memory: 6Gi
           ports:
             - containerPort: 25565
-            - containerPort: 8123
+            - containerPort: 8100
           volumeMounts:
             - name: gitea-data
               mountPath: /data
@@ -73,7 +73,7 @@ spec:
       name: minecraft
     - port: 8080
       protocol: TCP
-      targetPort: 8123
+      targetPort: 8100
       name: minecraft-map-tcp
     - port: 80
       protocol: TCP
