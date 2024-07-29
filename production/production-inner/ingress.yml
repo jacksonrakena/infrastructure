@@ -27,13 +27,12 @@ spec:
     - secretName: gitea-le
       hosts:
         - git.jacksonrakena.com
-        - scm.jacksonrakena.com
         - minecraft-map.jacksonrakena.com
         - map.mc.jackson.omg.lol
+        - mc.jackson.omg.lol
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
-        - live.rakena.co.nz
   ingressClassName: default-class
   rules:
     - host: vault.rakena.co.nz
@@ -94,26 +93,6 @@ spec:
             backend:
               service:
                 name: gitea
-                port:
-                  number: 80
-    - host: scm.jacksonrakena.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: gitea
-                port:
-                  number: 80
-    - host: live.rakena.co.nz
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: streamapps-shim
                 port:
                   number: 80
     - host: api.gradekeeper.xyz
