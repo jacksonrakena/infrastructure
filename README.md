@@ -17,7 +17,7 @@ graph LR;
  ingress-->gk["Gradekeeper Server\napi.gradekeeper.xyz"];
  ingress-->vw["Vaultwarden\nvault.rakena.co.nz"];
  ingress_http-->|HTTPS|gitea["Gitea\ngit.jacksonrakena.com"];
- ingress_http-->|"SSH via CM \ningress-nginx-tcp (unsecured)"|gitea;
+ ingress_http-->|"SSH via CM \n ingress-nginx-tcp (unsecured)"|gitea;
  jb["Jacksonbot\nbot.jacksonrakena.com"];
  jb-->jb_onepod[One pod];
  jb-->pg;
