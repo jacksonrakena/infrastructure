@@ -34,12 +34,23 @@ spec:
     - secretName: rakena-com-au-cert
       hosts:
         - id.rakena.com.au
+        - budget.rakena.com.au
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
         - id.rakena.co.nz
   ingressClassName: default-class
   rules:
+    - host: budget.rakena.com.au
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mxbudget
+                port:
+                  number: 80
     - host: id.rakena.com.au
       http:
         paths:
