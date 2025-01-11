@@ -31,26 +31,26 @@ spec:
           persistentVolumeClaim:
             claimName: gitea-data
       containers:
-        - name: minecraft
-          image: itzg/minecraft-server
-          envFrom:
-            - configMapRef:
-                name: mc-config
-          resources:
-            limits:
-              memory: 8Gi
-            requests:
-              memory: 6Gi
-          ports:
-            - containerPort: 25565
-            - containerPort: 8100
-          volumeMounts:
-            - name: gitea-data
-              mountPath: /data
-              subPath: minecraft-vnl2
-            - name: gitea-data
-              mountPath: /downloads
-              subPath: minecraft-downloads-vnl2
+        # - name: minecraft
+        #   image: itzg/minecraft-server
+        #   envFrom:
+        #     - configMapRef:
+        #         name: mc-config
+        #   resources:
+        #     limits:
+        #       memory: 8Gi
+        #     requests:
+        #       memory: 6Gi
+        #   ports:
+        #     - containerPort: 25565
+        #     - containerPort: 8100
+        #   volumeMounts:
+        #     - name: gitea-data
+        #       mountPath: /data
+        #       subPath: minecraft-vnl2
+        #     - name: gitea-data
+        #       mountPath: /downloads
+        #       subPath: minecraft-downloads-vnl2
         - name: gitea
           image: gitea/gitea:1.21.2
           ports:
@@ -67,14 +67,14 @@ metadata:
   name: gitea
 spec:
   ports:
-    - port: 25565
-      protocol: TCP
-      targetPort: 25565
-      name: minecraft
-    - port: 8080
-      protocol: TCP
-      targetPort: 8100
-      name: minecraft-map-tcp
+    # - port: 25565
+    #   protocol: TCP
+    #   targetPort: 25565
+    #   name: minecraft
+    # - port: 8080
+    #   protocol: TCP
+    #   targetPort: 8100
+    #   name: minecraft-map-tcp
     - port: 80
       protocol: TCP
       targetPort: 3000

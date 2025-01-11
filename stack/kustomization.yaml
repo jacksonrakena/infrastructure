@@ -7,3 +7,4 @@ resources:
   - apps/gitea.yml
   - apps/gradekeeper-server.yml
   - apps/jacksonbot.yml
+  - apps/identity.yml

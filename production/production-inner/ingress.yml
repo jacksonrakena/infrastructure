@@ -30,11 +30,25 @@ spec:
         - minecraft-map.jacksonrakena.com
         - map.mc.jackson.omg.lol
         - mc.jackson.omg.lol
+    - secretName: rakena-com-au-cert
+      hosts:
+        - id.rakena.com.au
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
+        - id.rakena.co.nz
   ingressClassName: default-class
   rules:
+    - host: id.rakena.com.au
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
     - host: vault.rakena.co.nz
       http:
         paths:

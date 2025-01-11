@@ -7,6 +7,11 @@ secretGenerator:
   - name: galahad-pg
     envs:
       - secrets/galahad-secret.env
+  - name: rakena-com-au-cert
+    type: "kubernetes.io/tls"
+    files:
+      - secrets/cert-rakena.com.au/tls.crt
+      - secrets/cert-rakena.com.au/tls.key
   - name: rakena-cert
     type: "kubernetes.io/tls"
     files:
@@ -27,6 +32,9 @@ configMapGenerator:
   - name: gradekeeper-config
     envs:
       - secrets/gradekeeper-server.env
+  - name: keycloak-config
+    envs:
+      - secrets/keycloak.env
 
 resources:
   # Nginx

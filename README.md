@@ -144,7 +144,7 @@ kubectl apply -k production
 
 #### Force manifest synchronisation
 ###### (warning, this is dangerous)
-To bring up all resources and delete **any** resource in the `production ` namespace that is not in the manifest, use:
+To bring up all resources and delete **any** resource in the `production` namespace that is not in the manifest, use:
 ```
 kubectl apply -k production --prune --all
 ```
