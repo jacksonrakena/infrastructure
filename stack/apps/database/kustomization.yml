@@ -1,0 +1,8 @@
+configMapGenerator:
+  - name: pgbouncer-config
+    files:
+      - entrypoint.sh
+
+resources:
+  - galahad.yml
+  - bouncer.yml

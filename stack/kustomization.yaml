@@ -3,9 +3,4 @@ resources:
   - arthur-global-data.yml
 
   # Applications
-  - apps/galahad.yml
-  - apps/gitea.yml
-  - apps/gradekeeper-server.yml
-  - apps/jacksonbot.yml
-  - apps/identity.yml
-  - apps/mxbudget.yml
+  - apps

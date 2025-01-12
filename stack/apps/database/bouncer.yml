@@ -1,0 +1,68 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgbouncer
+  annotations:
+    tailscale.com/expose: "true"
+  namespace: database
+  labels:
+    app: pgbouncer
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 6432
+      protocol: TCP
+      targetPort: 6432
+  selector:
+    app: pgbouncer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+  namespace: database
+  labels:
+    app: pgbouncer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pgbouncer
+  template:
+    metadata:
+      labels:
+        app: pgbouncer
+    spec:
+      containers:
+        - name: pgbouncer
+          image: bitnami/pgbouncer
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6432
+              name: tcp
+          env:
+            - name: POSTGRESQL_HOST
+              value: postgres.production.svc.cluster.local
+            - name: PGBOUNCER_DATABASE
+              value: "mx"
+            - name: PGBOUNCER_AUTH_QUERY
+              value: "SELECT p_user, p_password FROM public.lookup($1)"
+            - name: POSTGRESQL_PASSWORD
+              value: "pgbouncer"
+            - name: PGBOUNCER_POOL_MODE
+              value: "transaction"
+            - name: POSTGRESQL_USERNAME
+              value: "pgbouncer"
+            - name: PGBOUNCER_AUTH_USER
+              value: "pgbouncer"
+            - name: PGBOUNCER_MAX_PREPARED_STATEMENTS
+              value: "10"
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "512Mi"

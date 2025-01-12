@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galahad
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: galahad
+  # Template for each Galahad Pod (there is really only one)
+  template:
+    metadata:
+      labels:
+        app: galahad
+    spec:
+      volumes:
+        - name: agd
+          persistentVolumeClaim:
+            claimName: arthur-global-data
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: agd
+              mountPath: /data
+              subPath: vaultwarden-data
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: galahad-pg
+                  key: db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: galahad-pg
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: galahad-pg
+                  key: password
+          volumeMounts:
+            - name: agd
+              mountPath: /var/lib/postgresql/data
+              subPath: pg-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postgres
+  name: postgres
+  annotations:
+    tailscale.com/expose: "true"
+spec:
+  ports:
+    - port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    app: galahad
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vaultwarden
+  name: vaultwarden
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: galahad
+  sessionAffinity: None
+  type: ClusterIP

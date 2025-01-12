@@ -1,0 +1,7 @@
+resources:
+  - database
+  - gitea.yml
+  - gradekeeper-server.yml
+  - jacksonbot.yml
+  - identity.yml
+  - mxbudget.yml
