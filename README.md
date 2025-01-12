@@ -2,23 +2,35 @@
 ```mermaid
 graph LR;
  client([Internet]);
+ subgraph ts[Tailscale];
+ ts_devices([Tailscale]);
+ end;
  subgraph cf_tls[Oracle NLB];
  client-..->cf[Cloudflare];
  end;
- subgraph vercel[Vercel];
- client-->gk_frontend[Gradekeeper Client\napp.gradekeeper.xyz]
+ subgraph vercel[Cloudflare Pages];
+ client-->gk_frontend[Gradekeeper Client<br/>app.gradekeeper.xyz]
  end;
  gk_frontend-->gk;
- client-.via Lets Encrypt.->ingress_http["Ingress\n(Lets Encrypt)"];
+ client-.via Lets Encrypt.->ingress_http["Ingress<br/>(Lets Encrypt)"];
  cf-..->ingress["Ingress<br>(NGINX)"];
  subgraph cluster[Arthur cluster]
+ ingress-->identity;
+ ingress-->mxbudget;
+ mxbudget["mxbudget<br/>budget.rakena.com.au"]-->pg;
+ identity["keycloak<br/>id.rakena.com.au"]-->pg;
+ ts_devices-->tailscale_sidecar;
+ ts_devices-->tailscale_exitnode;
+ tailscale_exitnode[Tailscale Exit Node]
+ tailscale_sidecar[Tailscale sidecars];
+ tailscale_sidecar-->pg;
  ingress_http;
  ingress;
- ingress-->gk["Gradekeeper Server\napi.gradekeeper.xyz"];
- ingress-->vw["Vaultwarden\nvault.rakena.co.nz"];
- ingress_http-->|HTTPS|gitea["Gitea\ngit.jacksonrakena.com"];
- ingress_http-->|"SSH via CM \n ingress-nginx-tcp (unsecured)"|gitea;
- jb["Jacksonbot\nbot.jacksonrakena.com"];
+ ingress-->gk["Gradekeeper Server<br/>api.gradekeeper.xyz"];
+ ingress-->vw["Vaultwarden<br/>vault.rakena.co.nz"];
+ ingress_http-->|HTTPS|gitea["Gitea<br/>git.jacksonrakena.com"];
+ ingress_http-->|"SSH via CM <br/> ingress-nginx-tcp (unsecured)"|gitea;
+ jb["Jacksonbot"];
  jb-->jb_onepod[One pod];
  jb-->pg;
  subgraph galahad["Galahad (single-pod)"]
@@ -39,8 +51,8 @@ graph LR;
  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
  classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
  classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white;
- class jb,mc,gitea,jb_onepod,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
- class client plain;
+ class jb,identity,mxbudget,tailscale_sidecar,tailscale_exitnode,mc,gitea,jb_onepod,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
+ class client,ts_devices plain;
  class agd,gdv plain;
  class cf cloudflare;
  class cluster cluster;
