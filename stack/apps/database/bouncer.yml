@@ -9,7 +9,6 @@ metadata:
     app: pgbouncer
 spec:
   type: ClusterIP
-  clusterIP: None
   ports:
     - port: 6432
       protocol: TCP
@@ -49,6 +48,8 @@ spec:
               value: "SELECT p_user, p_password FROM public.lookup($1)"
             - name: POSTGRESQL_PASSWORD
               value: "pgbouncer"
+            - name: PGBOUNCER_PORT
+              value: "6432"
             - name: PGBOUNCER_POOL_MODE
               value: "transaction"
             - name: POSTGRESQL_USERNAME
