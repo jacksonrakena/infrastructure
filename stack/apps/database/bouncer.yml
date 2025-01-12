@@ -5,7 +5,6 @@ metadata:
   name: pgbouncer
   annotations:
     tailscale.com/expose: "true"
-  namespace: database
   labels:
     app: pgbouncer
 spec:
@@ -22,7 +21,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pgbouncer
-  namespace: database
   labels:
     app: pgbouncer
 spec:
