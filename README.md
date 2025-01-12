@@ -166,7 +166,7 @@ kubectl apply -k production --prune --all
 ### Dashboard
 - Install resources:
 `kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml`  
-- Install accounts: `kubectl apply -f /utils/dashboard.yml`
+- Install accounts: `kubectl apply -f utils/dashboard.yml`
 - Generate token: `kubectl create token admin-user -n kubernetes-dashboard`
 - Proxy: `kubectl proxy`
 - Access: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
