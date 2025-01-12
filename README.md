@@ -17,7 +17,8 @@ graph LR;
  subgraph cluster[Arthur cluster]
  ingress-->identity;
  ingress-->mxbudget;
- mxbudget["mxbudget<br/>budget.rakena.com.au"]-->pg;
+ pgbouncer["pgbouncer<br/>(two pods)"]-->pg;
+ mxbudget["mxbudget<br/>budget.rakena.com.au"]-->pgbouncer;
  identity["keycloak<br/>id.rakena.com.au"]-->pg;
  ts_devices-->tailscale_sidecar;
  ts_devices-->tailscale_exitnode;
