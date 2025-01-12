@@ -1,4 +1,5 @@
 resources:
   - https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.yaml
   - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+  - tailscale
   - production-inner
