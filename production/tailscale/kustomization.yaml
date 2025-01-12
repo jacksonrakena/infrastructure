@@ -2,3 +2,4 @@ resources:
   - tailscale-namespace.yaml
   - secrets/tailscale.yaml
   - operator.yaml
+  - connector.yaml
