@@ -1,7 +1,7 @@
 apiVersion: tailscale.com/v1alpha1
 kind: Connector
 metadata:
-  name: ts-pod-cidrs
+  name: tailscale-exit-node
 spec:
   hostname: melbourne-exit
   exitNode: true

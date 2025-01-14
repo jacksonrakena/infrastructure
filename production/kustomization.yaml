@@ -1,5 +1,48 @@
+namespace: prod2
+
+secretGenerator:
+  - name: galahad-pg
+    envs:
+      - secrets/galahad-secret.env
+  - name: rakena-com-au-cert
+    type: "kubernetes.io/tls"
+    files:
+      - secrets/cert-rakena.com.au/tls.crt
+      - secrets/cert-rakena.com.au/tls.key
+  - name: rakena-cert
+    type: "kubernetes.io/tls"
+    files:
+      - secrets/cert-rakena.co.nz/tls.crt
+      - secrets/cert-rakena.co.nz/tls.key
+  - name: gh-container-registry
+    type: kubernetes.io/dockerconfigjson
+    files:
+      - .dockerconfigjson=secrets/docker-registry-config.json
+
+configMapGenerator:
+  - name: jacksonbot-config
+    files:
+      - jacksonbot.appsettings.json=secrets/jacksonbot-config.json
+  - name: gradekeeper-config
+    envs:
+      - secrets/gradekeeper-server.env
+  - name: mxbudget-config
+    envs:
+      - secrets/mxbudget.env
+  - name: keycloak-config
+    envs:
+      - secrets/keycloak.env
+
 resources:
-  - https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.yaml
   - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-  - tailscale
-  - production-inner
+  - secrets/tailscale.yaml
+
+  # Nginx
+  #- nginx/
+  - traefik
+
+  # App stack
+  - ../stack
+
+  # Ingresses
+  - ingress.yml

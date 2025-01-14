@@ -11,28 +11,23 @@ graph LR;
  subgraph vercel[Cloudflare Pages];
  client-->gk_frontend[Gradekeeper Client<br/>app.gradekeeper.xyz]
  end;
- gk_frontend-->gk;
- client-.via Lets Encrypt.->ingress_http["Ingress<br/>(Lets Encrypt)"];
- cf-..->ingress["Ingress<br>(NGINX)"];
+ gk_frontend-->ingress;
+ cf-..->ingress["Ingress<br>(Traefik)"];
  subgraph cluster[Arthur cluster]
+  tailscale_exitnode[Tailscale Exit Node]
+ tailscale_sidecar[Tailscale sidecars];
+  ts_devices-->tailscale_sidecar;
+  ts_devices-->tailscale_exitnode;
  ingress-->identity;
  ingress-->mxbudget;
  pgbouncer["pgbouncer<br/>(two pods)"]-->pg;
  mxbudget["mxbudget<br/>budget.rakena.com.au"]-->pgbouncer;
  identity["keycloak<br/>id.rakena.com.au"]-->pg;
- ts_devices-->tailscale_sidecar;
- ts_devices-->tailscale_exitnode;
- tailscale_exitnode[Tailscale Exit Node]
- tailscale_sidecar[Tailscale sidecars];
  tailscale_sidecar-->pg;
- ingress_http;
  ingress;
  ingress-->gk["Gradekeeper Server<br/>api.gradekeeper.xyz"];
  ingress-->vw["Vaultwarden<br/>vault.rakena.co.nz"];
- ingress_http-->|HTTPS|gitea["Gitea<br/>git.jacksonrakena.com"];
- ingress_http-->|"SSH via CM <br/> ingress-nginx-tcp (unsecured)"|gitea;
  jb["Jacksonbot"];
- jb-->jb_onepod[One pod];
  jb-->pg;
  subgraph galahad["Galahad (single-pod)"]
  vw;
@@ -42,11 +37,7 @@ graph LR;
  vw-->agd;
  pg-->agd;
  end
- gitea;
- gitea-->gdv[50GB data volume];
- gitea-->pg;
  gk-->pg;
- gk-->gk_twopods[Two pods];
  end
  classDef plain fill:#ddd,stroke:#fff,stroke-width:4px,color:#000;
  classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
@@ -58,7 +49,7 @@ graph LR;
  class cf cloudflare;
  class cluster cluster;
 ```
-This repository contains a complete Kustomize manifest that can bring up all of my self-hosted services, as well as an NGINX ingress (+ controller) and associated services.
+This repository contains a complete Kustomize manifest that can bring up all of my self-hosted services, as well as an Traefik ingress and associated services.
 
 This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a fresh cluster. All resources are deployed in their own namespace (`production`/`canary`/`development`) to avoid collisions.	
   
@@ -71,30 +62,26 @@ I do not intend for this repository to be used by anyone else (but feel free to 
 - [x] Vaultwarden (https://vault.rakena.co.nz)
 - [x] Jacksonbot (https://github.com/jacksonrakena/jacksonbot)
 - [x] Gradekeeper API server (https://github.com/gradekeeper/server)
-
-**Future**
 - [x] Use Kustomize
   - [x] Investigate using configMapGenerator and secretMapGenerator
 - [ ] Investigate using Helm
 
 ## Production overview (`/production`)
 The production stack performs the following:
-1. Tags all resources with the `production` namespace.
-2. Tags all resources with `author=jacksonrakena` and `release=production` metdata.
-3. Imports the production NGINX controller from `/production/nginx`
-4. Loads certificates from `/production/secrets/`
-5. Loads other secrets from `/production/secrets/`
-6. Imports the main generic app stack from `/stack`
-7. Loads the production ingress table.
+1. Tags all resources with the `prod2` namespace.
+2. Configures Traefik (`/production/traefik/`):
+   1. Creates service accounts, roles, and bindings.
+   2. Creates a Traefik deployment configured solely to run on port 443. (`/production/traefik/02-traefik.yml`)
+   3. Creates a `LoadBalancer` service configured to an Oracle Cloud Network Load Balancer, and exposes port 443 to the Traefik deployment
+      - Given that NGINX natively can perform the same tasks of the regular Load Balancer (TLS termination, virtual hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer over the Network Load Balancer.
+      - Using the Network Load Balancer also allows us to receive and handle non-HTTP connections over our ingress, in the future.
+      - This file must be updated if the claimed IP address changes.
+      - This file also adjusts the cluster traffic policy to fix an issue where the Load Balancer couldn't reach nodes in the cluster.
+3. Loads certificates from `/production/secrets/`
+4. Loads other secrets from `/production/secrets/`
+5. Imports the main generic app stack from `/stack`
+6. Loads the production ingress table. (`/production/ingress.yml`)
 
-### NGINX controller (`/production/nginx`)
-- Installs the NGINX Ingress controller from a remote source.
-- Update this file to update the NGINX Ingress controller version.
-- `nlb-patch` patches the controller to request a Network Load Balancer from Oracle instead of a Load Balancer (it's cheaper)
-  - Given that NGINX natively can perform the same tasks of the regular Load Balancer (TLS termination, virtual hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer over the Network Load Balancer.
-  - Using the Network Load Balancer also allows us to receive and handle non-HTTP connections over our ingress, in the future.
-  - This file must be updated if the claimed IP address changes.
-  - This file also adjusts the cluster traffic policy to fix an issue where the Load Balancer couldn't reach nodes in the cluster.
 ### Secrets (`/production/secrets`)
 This directory contains production-level secrets that the stack depends on.  
 These secrets are excluded for security reasons.
@@ -106,6 +93,7 @@ These secrets are excluded for security reasons.
 | `gradekeeper-config` (gradekeeper-server.env) | ConfigMap | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs). |
 | `jacksonbot-config` (jacksonbot-config.json) | ConfigMap | Contains a single file key of `jacksonbot.appsettings.json` that contains valid [Jacksonbot configuration](https://github.com/jacksonrakena/jacksonbot/blob/v20/jacksonbot.appsettings.example.json). |
 | `rakena-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt) | `kubernetes.io/tls` | Contains the certificate and key for `rakena.co.nz`. |
+| `rakena-com-au-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt) | `kubernetes.io/tls` | Contains the certificate and key for `rakena.com.au`. |
 
 ## Stack resources overview (`/stack`)
 ### Storage
@@ -115,38 +103,41 @@ These secrets are excluded for security reasons.
 - Owned by Galahad
 
 ### Deployments
-#### apps/galahad
-- Galahad is the deployment that controls access to the Arthur primary data block volume (`arthur-global-data`.yml)
-- Limited to 1 replica due to the nature of the data it controls
-- Runs Vaultwarden as it needs data access
-- Runs PostgreSQL as it needs data access
-
-#### apps/jacksonbot
-- Runs Jacksonbot.
-- Depends on Galahad
-- Recreate strategy (only ever one pod running)
-#### apps/gradekeeper-server
-- Runs the Gradekeeper server.
-- Depends on Galahad.
-- 2 replicas, 1 max unavailable
-- Pulls the Docker image from the GitHub container registry
+| Deployment name | Service | Information |
+| --- | --- | --- |
+| `apps/database/galahad` | Postgres 15, Vaultwarden | These services share the same data volume. |
+| `apps/database/bouncer` | PGBouncer | Pools connections for some serverless apps running in the cluster.
+| `apps/tailscale` | Tailscale | Configures a Tailscale operator and exit nodes. |
+| `apps/identity` | Keycloak | Runs `id.rakena.com.au`.|
+| `apps/jacksonbot` | [Jacksonbot](https://github.com/jacksonrakena/jacksonbot) | Runs Jacksonbot. |
+| `apps/mxbudget` | [mx](https://github.com/jacksonrakena/mx) | |
+| `apps/gradekeeper` | [gradekeeper-server](https://github.com/jacksonrakena/gradekeeper-server) | Runs the hosted Gradekeeper API server.
 
 ## Recipes
 ### Setup production
 The production Kustomize file installs all necessary remote resources, so this recipe assumes an empty Kubernetes cluster.
+```
+kubectl create namespace prod2
+```
 #### Load balancer setup
-You'll need to edit `production/nginx/nlb-patch.yml` to have your Oracle Load Balancer settings:
+You'll need to edit `production/traefik/02-traefik-services.yml` to have your Oracle Network Load Balancer settings:
 ```yaml
-$patch: merge
 apiVersion: v1
 kind: Service
 metadata:
-  name: required-for-kustomize-but-not-used
+  name: traefik-service
   annotations:
     oci.oraclecloud.com/load-balancer-type: "nlb"
 spec:
-  loadBalancerIP: YOUR CLAIMED IP ADDRESS HERE
+  loadBalancerIP: <YOUR_NETWORK_LOAD_BALANCER_IP_HERE>
   externalTrafficPolicy: Cluster
+  type: LoadBalancer
+  ports:
+    - name: web-https
+      port: 443
+      targetPort: web-https
+  selector:
+    app: traefik
 ```
 
 #### Bring everything up
@@ -172,6 +163,6 @@ kubectl apply -k production --prune --all
 - Access: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 
 ## Copyright
-**&copy; 2023 Jackson Rakena**  
+**&copy; 2023&mdash;2025 Jackson Rakena**  
 Use is permitted for educational and personal purposes only.  
 Commercial use is forbidden without written consent of the project author.
