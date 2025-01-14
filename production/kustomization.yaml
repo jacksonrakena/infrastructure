@@ -34,7 +34,7 @@ configMapGenerator:
       - secrets/keycloak.env
 
 resources:
-  - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+  #- https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
   - secrets/tailscale.yaml
 
   # Nginx
