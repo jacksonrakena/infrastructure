@@ -58,10 +58,10 @@ spec:
               value: "pgbouncer"
             - name: PGBOUNCER_MAX_PREPARED_STATEMENTS
               value: "10"
-          resources:
-            limits:
-              cpu: "250m"
-              memory: "512Mi"
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
+          # resources:
+          #   limits:
+          #     cpu: "250m"
+          #     memory: "512Mi"
+          #   requests:
+          #     cpu: "250m"
+          #     memory: "512Mi"
