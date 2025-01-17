@@ -154,6 +154,14 @@ kubectl apply -k production --prune --all
 ```
 
 ## Utilities
+### Prometheus and Grafana
+This utility sets up Prometheus, Grafana, and some built-in cluster and namespace dashboards using [`kube-prometheus`](https://github.com/prometheus-operator/kube-prometheus). It doesn't set up any ingress tables, as it doesn't configure any persistence (so configuration settings would get erased at a pod restart). It exposes it over Tailscale, so if you have the Tailscale component configured, you can access it through the Tailscale DNS name.
+
+Install:
+
+```
+kubectl apply -f utils/prometheus/
+```
 ### Dashboard
 - Install resources:
 `kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml`  
