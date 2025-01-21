@@ -5,3 +5,4 @@ resources:
   - jacksonbot.yml
   - identity.yml
   - mxbudget.yml
+  - mixer.yml

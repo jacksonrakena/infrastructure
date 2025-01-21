@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixer-api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mixer-api
+  template:
+    metadata:
+      labels:
+        app: mixer-api
+    spec:
+      containers:
+        - name: mixer-api
+          image: ghcr.io/jacksonrakena/mixer:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: mixer-config
+      imagePullSecrets:
+        - name: gh-container-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mixer-api
+  name: mixer-api
+  annotations:
+    tailscale.com/expose: "true"
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: mixer-api
+  type: ClusterIP

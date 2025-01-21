@@ -26,6 +26,9 @@ configMapGenerator:
   - name: gradekeeper-config
     envs:
       - secrets/gradekeeper-server.env
+  - name: mixer-config
+    envs:
+      - secrets/mixer.env
   - name: mxbudget-config
     envs:
       - secrets/mxbudget.env
