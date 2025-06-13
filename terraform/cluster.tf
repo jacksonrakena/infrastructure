@@ -44,7 +44,7 @@ resource "oci_containerengine_cluster" "arthur" {
   image_policy_config {
     is_policy_enabled = "false"
   }
-  kubernetes_version = "v1.32.1"
+  kubernetes_version = "v1.33.0"
   name               = "arthur"
   options {
     add_ons {
