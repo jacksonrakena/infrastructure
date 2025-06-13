@@ -9,8 +9,8 @@ spec:
   externalTrafficPolicy: Cluster
   type: LoadBalancer
   ports:
-    - name: web-https
+    - name: websecure
       port: 443
-      targetPort: web-https
+      targetPort: websecure
   selector:
     app: traefik

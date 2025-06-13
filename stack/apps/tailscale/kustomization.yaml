@@ -1,4 +1,0 @@
-resources:
-  - tailscale-namespace.yaml
-  - operator.yaml
-  - connector.yaml

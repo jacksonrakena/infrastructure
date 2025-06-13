@@ -1,5 +1,4 @@
 resources:
-  - tailscale
   - database
   - gradekeeper-server.yml
   - jacksonbot.yml

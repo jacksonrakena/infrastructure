@@ -18,10 +18,12 @@ spec:
       serviceAccountName: traefik-account
       containers:
         - name: traefik
-          image: traefik:v3.3
+          image: traefik:v3.4
           args:
-            - --entryPoints.web-https.address=:443
+            - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.http.tls=true
+            - --log.level=trace
             - --providers.kubernetesingress=true
           ports:
-            - name: web-https
+            - name: websecure
               containerPort: 443

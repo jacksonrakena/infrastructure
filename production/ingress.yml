@@ -4,26 +4,17 @@ metadata:
   name: global-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.entrypoints: web-https
-    # nginx.ingress.kubernetes.io/rewrite-target: /
-    # nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-    # nginx.ingress.kubernetes.io/affinity: cookie
-    # nginx.ingress.kubernetes.io/session-cookie-name: arthur-sticky-session
-    # nginx.ingress.kubernetes.io/session-cookie-hash: sha1
-    # nginx.ingress.kubernetes.io/session-cookie-max-age: "1800"
-    # nginx.ingress.kubernetes.io/proxy-body-size: 0
-    # cert-manager.io/issuer: "ingress-issuer"
-    # cert-manager.io/renew-before: 360h
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   tls:
     - secretName: rakena-com-au-cert
       hosts:
         - id.rakena.com.au
         - budget.rakena.com.au
+        - vault.rakena.com.au
     - secretName: rakena-cert
       hosts:
         - vault.rakena.co.nz
-        - id.rakena.co.nz
   rules:
     - host: budget.rakena.com.au
       http:
@@ -45,6 +36,16 @@ spec:
                 name: keycloak
                 port:
                   number: 8080
+    - host: vault.rakena.com.au
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80
     - host: vault.rakena.co.nz
       http:
         paths:

@@ -24,6 +24,9 @@ spec:
           image: vaultwarden/server
           ports:
             - containerPort: 80
+          envFrom:
+            - secretRef:
+                name: vaultwarden-env
           volumeMounts:
             - name: agd
               mountPath: /data

@@ -1,9 +1,12 @@
-namespace: prod2
+namespace: prod
 
 secretGenerator:
   - name: galahad-pg
     envs:
       - secrets/galahad-secret.env
+  - name: vaultwarden-env
+    envs:
+      - secrets/vaultwarden.env
   - name: rakena-com-au-cert
     type: "kubernetes.io/tls"
     files:
@@ -37,11 +40,8 @@ configMapGenerator:
       - secrets/keycloak.env
 
 resources:
+  - namespace.yaml
   #- https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-  - secrets/tailscale.yaml
-
-  # Nginx
-  #- nginx/
   - traefik
 
   # App stack
