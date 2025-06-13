@@ -1,7 +1,7 @@
 resource "oci_containerengine_node_pool" "main" {
   cluster_id         = oci_containerengine_cluster.arthur.id
   compartment_id     = oci_license_manager_configuration.license.id
-  kubernetes_version = "v1.32.1"
+  kubernetes_version = "v1.31.1"
   name               = "pool1"
   node_config_details {
     node_pool_pod_network_option_details {
