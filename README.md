@@ -1,55 +1,68 @@
 # Jackson's Kubernetes Configuration
 ```mermaid
-graph LR;
- client([Internet]);
- subgraph ts[Tailscale];
- ts_devices([Tailscale]);
- end;
- subgraph cf_tls[Oracle NLB];
- client-..->cf[Cloudflare];
- end;
- subgraph vercel[Cloudflare Pages];
- client-->gk_frontend[Gradekeeper Client<br/>app.gradekeeper.xyz]
- end;
- gk_frontend-->ingress;
- cf-..->ingress["Ingress<br>(Traefik)"];
- subgraph cluster[Arthur cluster]
-  tailscale_exitnode[Tailscale Exit Node]
- tailscale_sidecar[Tailscale sidecars];
-  ts_devices-->tailscale_sidecar;
-  ts_devices-->tailscale_exitnode;
- ingress-->identity;
- ingress-->mxbudget;
- pgbouncer["pgbouncer<br/>(two pods)"]-->pg;
- mxbudget["mxbudget<br/>budget.rakena.com.au"]-->pgbouncer;
- identity["keycloak<br/>id.rakena.com.au"]-->pg;
- tailscale_sidecar-->pg;
- ingress;
- ingress-->gk["Gradekeeper Server<br/>api.gradekeeper.xyz"];
- ingress-->vw["Vaultwarden<br/>vault.rakena.co.nz"];
- jb["Jacksonbot"];
- jb-->pg;
+flowchart LR
+ subgraph cf_tls["Oracle NLB"]
+        vsec["Default Security List<br>arthur_svclb_seclist"]
+  end
  subgraph galahad["Galahad (single-pod)"]
- vw;
- pg[Postgres 15];
- vw-->pg;
- agd[50GB data volume];
- vw-->agd;
- pg-->agd;
- end
- gk-->pg;
- end
- classDef plain fill:#ddd,stroke:#fff,stroke-width:4px,color:#000;
- classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff;
- classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
- classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white;
- class jb,identity,mxbudget,tailscale_sidecar,tailscale_exitnode,mc,gitea,jb_onepod,service,pod1,pod2,gk,sa,vw,pg,gk_twopods,sa_twopods k8s;
- class client,ts_devices plain;
- class agd,gdv plain;
- class cf cloudflare;
- class cluster cluster;
+        vw["Vaultwarden<br>vault.rakena.co.nz"]
+        pg["Postgres 15"]
+        agd["50GB data volume"]
+  end
+ subgraph cluster["Arthur cluster"]
+        identity["Identity (Keycloak)<br>id.rakena.com.au"]
+        ingress["Ingress<br>(Traefik)"]
+        mxbudget["mxbudget<br>budget.rakena.com.au"]
+        pgbouncer["pgbouncer<br>(two pods)"]
+        gk["Gradekeeper Server<br>api.gradekeeper.xyz"]
+        jb["Jacksonbot"]
+        galahad
+  end
+    client(["Internet"]) -..-> cf["Cloudflare"]
+    tfx["Terraform<br><code>terraform</code>"] -- Provisions --> cluster
+    tfx --> vsec
+    gk_frontend["Gradekeeper Client<br>app.gradekeeper.xyz"] --> vsec
+    cf -. via direct ..-> vsec
+    vsec --> ingress
+    ingress --> identity & mxbudget & gk & vw
+    pgbouncer --> pg
+    mxbudget --> pgbouncer
+    identity --> pg
+    jb --> pg
+    vw --> pg & agd
+    pg --> agd
+    gk --> pg
+    cf -- Pages --> gk_frontend
+     vw:::k8s
+     pg:::k8s
+     agd:::plain
+     agd:::Sky
+     identity:::k8s
+     ingress:::Aqua
+     mxbudget:::k8s
+     pgbouncer:::Rose
+     gk:::k8s
+     jb:::k8s
+     client:::plain
+     cf:::cloudflare
+     tfx:::Class_01
+     cluster:::cluster
+     gk_frontend:::Peach
+    classDef plain fill:#ddd,stroke:#fff,stroke-width:4px,color:#000
+    classDef k8s fill:#326ce5,stroke:#fff,stroke-width:4px,color:#fff
+    classDef cluster fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5
+    classDef cloudflare fill:#F48120,stroke:#F48120,stroke-width:2px,color:white
+    classDef Class_01 fill:#000000, color:#fff, stroke:#000000
+    classDef Sky stroke-width:1px, stroke-dasharray:none, stroke:#374D7C, fill:#E2EBFF, color:#374D7C
+    classDef Peach stroke-width:1px, stroke-dasharray:none, stroke:#FBB35A, fill:#FFEFDB, color:#8F632D
+    classDef Aqua stroke-width:1px, stroke-dasharray:none, stroke:#46EDC8, fill:#DEFFF8, color:#378E7A
+    classDef Rose stroke-width:1px, stroke-dasharray:none, stroke:#FF5978, fill:#FFDFE5, color:#8E2236
+    style galahad fill:#BBDEFB
 ```
-This repository contains a complete Kustomize manifest that can bring up all of my self-hosted services, as well as an Traefik ingress and associated services.
+This repository holds a variety of resources for bringing up all of my self-hosted services, including:
+1. Terraform configuration for Oracle Cloud Infrastructure (OCI) that can provision a Kubernetes cluster and associated networking infrastructure
+2. A complete Kustomize manifest for all of my services running on the above cluster
+3. Traefik ingress and associated resources
 
 This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a fresh cluster. All resources are deployed in their own namespace (`production`/`canary`/`development`) to avoid collisions.	
   
@@ -114,11 +127,6 @@ These secrets are excluded for security reasons.
 | `apps/gradekeeper` | [gradekeeper-server](https://github.com/jacksonrakena/gradekeeper-server) | Runs the hosted Gradekeeper API server.
 
 ## Recipes
-### Setup production
-The production Kustomize file installs all necessary remote resources, so this recipe assumes an empty Kubernetes cluster.
-```
-kubectl create namespace prod2
-```
 #### Load balancer setup
 You'll need to edit `production/traefik/02-traefik-services.yml` to have your Oracle Network Load Balancer settings:
 ```yaml
@@ -152,23 +160,6 @@ To bring up all resources and delete **any** resource in the `production` namesp
 ```
 kubectl apply -k production --prune --all
 ```
-
-## Utilities
-### Prometheus and Grafana
-This utility sets up Prometheus, Grafana, and some built-in cluster and namespace dashboards using [`kube-prometheus`](https://github.com/prometheus-operator/kube-prometheus). It doesn't set up any ingress tables, as it doesn't configure any persistence (so configuration settings would get erased at a pod restart). It exposes it over Tailscale, so if you have the Tailscale component configured, you can access it through the Tailscale DNS name.
-
-Install:
-
-```
-kubectl apply -f utils/prometheus/
-```
-### Dashboard
-- Install resources:
-`kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml`  
-- Install accounts: `kubectl apply -f utils/dashboard.yml`
-- Generate token: `kubectl create token admin-user -n kubernetes-dashboard`
-- Proxy: `kubectl proxy`
-- Access: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 
 ## Copyright
 **&copy; 2023&mdash;2025 Jackson Rakena**  
