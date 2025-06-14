@@ -1,6 +1,0 @@
-resources:
-  # Volumes
-  - arthur-global-data.yml
-
-  # Applications
-  - apps

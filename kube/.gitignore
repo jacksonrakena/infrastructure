@@ -1,0 +1,10 @@
+./gradle
+build
+dist
+target
+/src/main/java/imports/k8s/
+/src/main/resources/imports/k8s/
+.gradle/
+.kotlin/
+imports/
+secrets/
