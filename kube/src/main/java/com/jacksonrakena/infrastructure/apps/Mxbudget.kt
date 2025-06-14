@@ -11,7 +11,9 @@ import org.cdk8s.plus28.DeploymentProps
 import org.cdk8s.plus28.DeploymentStrategy
 import org.cdk8s.plus28.DockerConfigSecret
 import org.cdk8s.plus28.EnvFrom
+import org.cdk8s.plus28.EnvValue
 import org.cdk8s.plus28.IConfigMap
+import org.cdk8s.plus28.Service
 import org.cdk8s.plus28.ServicePort
 import software.constructs.Construct
 
@@ -19,6 +21,7 @@ class Mxbudget(
     scope: Construct,
     id: String,
     registrySecret: DockerConfigSecret,
+    bouncerService: Service,
     configMap: IConfigMap,
     props: ChartProps? = null,
 ) : Chart(scope, id, props) {
@@ -44,6 +47,11 @@ class Mxbudget(
                         .envFrom(
                             listOf(
                                 EnvFrom(configMap)
+                            )
+                        )
+                        .envVariables(
+                            mapOf(
+                                "DATABASE_URL" to EnvValue.fromValue("postgresql://mx:mx@${bouncerService.name}:6432/mx")
                             )
                         )
                         .build()

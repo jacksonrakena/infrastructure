@@ -3,19 +3,13 @@ package com.jacksonrakena.infrastructure.apps.persistence
 import com.jacksonrakena.infrastructure.util.applyCommonConfiguration
 import org.cdk8s.Chart
 import org.cdk8s.ChartProps
-import org.cdk8s.Size
 import org.cdk8s.plus28.ContainerPort
 import org.cdk8s.plus28.ContainerProps
-import org.cdk8s.plus28.ContainerResources
-import org.cdk8s.plus28.ContainerSecurityContextProps
-import org.cdk8s.plus28.Cpu
-import org.cdk8s.plus28.CpuResources
 import org.cdk8s.plus28.Deployment
 import org.cdk8s.plus28.DeploymentProps
 import org.cdk8s.plus28.DeploymentStrategy
 import org.cdk8s.plus28.EnvFrom
 import org.cdk8s.plus28.ISecret
-import org.cdk8s.plus28.MemoryResources
 import org.cdk8s.plus28.PersistentVolumeClaim
 import org.cdk8s.plus28.Protocol
 import org.cdk8s.plus28.Service
@@ -33,7 +27,7 @@ class Galahad(
     postgresSecret: ISecret,
     volumeClaim: PersistentVolumeClaim,
     props: ChartProps? = null,
-): Chart(scope, id, props) {
+) : Chart(scope, id, props) {
     val vol = Volume.fromPersistentVolumeClaim(this, "galahad-pvc-mount", volumeClaim)
     val deployment = Deployment(
         this,

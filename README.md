@@ -1,4 +1,5 @@
 # Jackson's Cloud Infrastructure
+
 ```mermaid
 flowchart LR
  subgraph cf_tls["Oracle NLB"]
@@ -59,109 +60,119 @@ flowchart LR
     classDef Rose stroke-width:1px, stroke-dasharray:none, stroke:#FF5978, fill:#FFDFE5, color:#8E2236
     style galahad fill:#BBDEFB
 ```
+
 This repository holds a variety of resources for bringing up all of my self-hosted services, including:
-1. Terraform configuration for Oracle Cloud Infrastructure (OCI) that can provision a Kubernetes cluster and associated networking infrastructure
-2. A complete Kustomize manifest for all of my services running on the above cluster
-3. Traefik ingress and associated resources
 
-This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a fresh cluster. All resources are deployed in their own namespace (`production`/`canary`/`development`) to avoid collisions.	
-  
-The only items missing are secrets (`/production/secrets`) that are required to bring up the stack. These are not included for security reasons.
+1. Terraform configuration for Oracle Cloud Infrastructure (OCI) that can provision a Kubernetes cluster and associated
+   networking infrastructure
+2. A `cdk8s` Kotlin project that can compile to a complete Kubernetes manifest for all resources running on-cluster
+    1. This includes a Traefik ingest controller, and TLS certificate provisioning
 
-I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you do, you'll need to replace the secrets with your own.
+This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a
+fresh cluster. All resources are deployed in their own namespace (`production`/`canary`/`development`) to avoid
+collisions.
 
-#### Lists of thing to do
-**Migrations**
-- [x] Vaultwarden (https://vault.rakena.co.nz)
-- [x] Jacksonbot (https://github.com/jacksonrakena/jacksonbot)
-- [x] Gradekeeper API server (https://github.com/gradekeeper/server)
-- [x] Use Kustomize
-  - [x] Investigate using configMapGenerator and secretMapGenerator
-- [ ] Investigate using Helm
+The only items missing are secrets (`/kube/secrets`) that are required to bring up the stack. These are not included for
+security reasons.
 
-## Production overview (`/production`)
-The production stack performs the following:
-1. Tags all resources with the `prod2` namespace.
-2. Configures Traefik (`/production/traefik/`):
-   1. Creates service accounts, roles, and bindings.
-   2. Creates a Traefik deployment configured solely to run on port 443. (`/production/traefik/02-traefik.yml`)
-   3. Creates a `LoadBalancer` service configured to an Oracle Cloud Network Load Balancer, and exposes port 443 to the Traefik deployment
-      - Given that NGINX natively can perform the same tasks of the regular Load Balancer (TLS termination, virtual hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer over the Network Load Balancer.
-      - Using the Network Load Balancer also allows us to receive and handle non-HTTP connections over our ingress, in the future.
-      - This file must be updated if the claimed IP address changes.
-      - This file also adjusts the cluster traffic policy to fix an issue where the Load Balancer couldn't reach nodes in the cluster.
-3. Loads certificates from `/production/secrets/`
-4. Loads other secrets from `/production/secrets/`
-5. Imports the main generic app stack from `/stack`
-6. Loads the production ingress table. (`/production/ingress.yml`)
+I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you
+do, you'll need to replace the secrets with your own.
 
-### Secrets (`/production/secrets`)
+## Infrastructure overview (`/terraform`)
+
+This folder provisions the raw Kubernetes cluster and associated resources on Oracle Cloud Infrastructure (OCI).
+
+| File                     | Role                                                                          |
+|--------------------------|-------------------------------------------------------------------------------|
+| `budget.tf`              | Configures OCI budget rules                                                   |
+| `cluster.tf`             | Configures the OKE Cluster Engine resource and main node pool                 |
+| `license_manager.tf`     | Configures OCI License Manager                                                |
+| `networking.tf`          | Configures the VCN, route tables, and gateways for IGW/NAT                    |
+| `networking_security.tf` | Configures the inter- and intra- node security lists and ingress/egress rules |
+| `networking_subnets.tf`  | Configures the node, service, and control plane subnets                       |
+| `provider.tf`            | Configures the OCI provider                                                   |
+
+## Kubernetes overview (`/kube`)
+
+The kube folder is a `cdk8s` Kotlin/Gradle project that creates a complete set of Kubernetes manifests in the
+`/kube/dist` folder,
+ready for sending to the cluster.
+
+1. `ProductionRunner` creates the production namespace and `ProductionStack`.
+2. `com.jacksonrakena.infrastructure.envs.prod.ProductionStack`:
+    1. Loads credentials from a local directory as Kubernetes secrets and configmap resources
+    2. Creates the global data volume (`ProductionBlockStorage`)
+    3. Provisions all apps, linking them to credentials and the data volume as necessary
+        1. Pgbouncer
+            1. `ProductionStack` connects pgbouncer to the dynamically-generated Postgres service name.
+        2. Gradekeeper Server
+        3. Keycloak (Identity)
+        4. Jacksonbot
+        5. Mixer & mxbudget
+    4. Configures Traefik resources (`com.jacksonrakena.infrastructure.traefik.TraefikStack`):
+        1. Creates service accounts, roles, and bindings.
+        2. Creates a Traefik deployment configured solely to run on port 443. (`/production/traefik/02-traefik.yml`)
+        3. Creates a `LoadBalancer` service configured to an Oracle Cloud Network Load Balancer, and exposes port 443 to
+           the
+           Traefik deployment
+            - Given that NGINX natively can perform the same tasks of the regular Load Balancer (TLS termination,
+              virtual
+              hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer over the Network
+              Load Balancer.
+            - Using the Network Load Balancer also allows us to receive and handle non-HTTP connections over our
+              ingress, in
+              the future.
+    5. Creates a Traefik instance with the production routing table.
+
+### Secrets (`/kube/secrets`)
+
 This directory contains production-level secrets that the stack depends on.  
 These secrets are excluded for security reasons.
 
-| Name | Type | Expected value |
-| ---- | ---- | -------------- |
-| `galahad-pg` (galahad-secret.env) | Secret/Opaque | `db`, `username`, and `password` control the username and password for the Galahad Postgres instance. |
-| `gh-container-registry` (docker-registry-config.json) | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry |
-| `gradekeeper-config` (gradekeeper-server.env) | ConfigMap | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs). |
-| `jacksonbot-config` (jacksonbot-config.json) | ConfigMap | Contains a single file key of `jacksonbot.appsettings.json` that contains valid [Jacksonbot configuration](https://github.com/jacksonrakena/jacksonbot/blob/v20/jacksonbot.appsettings.example.json). |
-| `rakena-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt) | `kubernetes.io/tls` | Contains the certificate and key for `rakena.co.nz`. |
-| `rakena-com-au-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt) | `kubernetes.io/tls` | Contains the certificate and key for `rakena.com.au`. |
-
-## Stack resources overview (`/stack`)
-### Storage
-#### arthur-global-data
-- 50GB block volume (`PersistentVolumeClaim`)
-- Stores Vaultwarden and PostgreSQL data
-- Owned by Galahad
-
-### Deployments
-| Deployment name | Service | Information |
-| --- | --- | --- |
-| `apps/database/galahad` | Postgres 15, Vaultwarden | These services share the same data volume. |
-| `apps/database/bouncer` | PGBouncer | Pools connections for some serverless apps running in the cluster.
-| `apps/tailscale` | Tailscale | Configures a Tailscale operator and exit nodes. |
-| `apps/identity` | Keycloak | Runs `id.rakena.com.au`.|
-| `apps/jacksonbot` | [Jacksonbot](https://github.com/jacksonrakena/jacksonbot) | Runs Jacksonbot. |
-| `apps/mxbudget` | [mx](https://github.com/jacksonrakena/mx) | |
-| `apps/gradekeeper` | [gradekeeper-server](https://github.com/jacksonrakena/gradekeeper-server) | Runs the hosted Gradekeeper API server.
+| Name                                                                            | Type                             | Expected value                                                                                                                                                                                        |
+|---------------------------------------------------------------------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `galahad-pg` (galahad-secret.env)                                               | Secret/Opaque                    | `db`, `username`, and `password` control the username and password for the Galahad Postgres instance.                                                                                                 |
+| `gh-container-registry` (docker-registry-config.json)                           | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry                                                                                                                                                             |
+| `gradekeeper-config` (gradekeeper-server.env)                                   | ConfigMap                        | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs).                                           |
+| `jacksonbot-config` (jacksonbot-config.json)                                    | ConfigMap                        | Contains a single file key of `jacksonbot.appsettings.json` that contains valid [Jacksonbot configuration](https://github.com/jacksonrakena/jacksonbot/blob/v20/jacksonbot.appsettings.example.json). |
+| `rakena-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt)        | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.co.nz`.                                                                                                                                                  |
+| `rakena-com-au-cert` (cert-rakena.co.nz/tls.key, and cert.rakena.co.nz/tls.crt) | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.com.au`.                                                                                                                                                 |
 
 ## Recipes
+
 #### Load balancer setup
-You'll need to edit `production/traefik/02-traefik-services.yml` to have your Oracle Network Load Balancer settings:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik-service
-  annotations:
-    oci.oraclecloud.com/load-balancer-type: "nlb"
-spec:
-  loadBalancerIP: <YOUR_NETWORK_LOAD_BALANCER_IP_HERE>
-  externalTrafficPolicy: Cluster
-  type: LoadBalancer
-  ports:
-    - name: web-https
-      port: 443
-      targetPort: web-https
-  selector:
-    app: traefik
-```
+
+You'll need to edit `com.jacksonrakena.infrastructure.traefik.TraefikStack` to have your Oracle Network Load Balancer
+settings.
 
 #### Bring everything up
-Use Kustomize to automatically bring up all resources in order:
+
+Use Terraform to provision infrastructure:
+
 ```
-kubectl apply -k production
+terraform apply
+```
+
+Use `cdk8s` and `kubectl` to automatically bring up all resources in order:
+
+```
+cd kube
+cdk8s synth
+kubectl apply -f dist
 ```
 
 #### Force manifest synchronisation
+
 ###### (warning, this is dangerous)
-To bring up all resources and delete **any** resource in the `production` namespace that is not in the manifest, use:
+
+To bring up all resources and delete **any** resource in the `prod` namespace that is not in the manifest, use:
+
 ```
-kubectl apply -k production --prune --all
+kubectl apply -f dist --prune --all
 ```
 
 ## Copyright
+
 **&copy; 2023&mdash;2025 Jackson Rakena**  
 Use is permitted for educational and personal purposes only.  
 Commercial use is forbidden without written consent of the project author.

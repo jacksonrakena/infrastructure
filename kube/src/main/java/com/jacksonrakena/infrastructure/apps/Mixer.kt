@@ -1,6 +1,7 @@
 package com.jacksonrakena.infrastructure.apps
 
 import com.jacksonrakena.infrastructure.util.applyCommonConfiguration
+import com.jacksonrakena.infrastructure.util.kube
 import org.cdk8s.Chart
 import org.cdk8s.ChartProps
 import org.cdk8s.plus28.ContainerPort
@@ -16,7 +17,6 @@ import org.cdk8s.plus28.IConfigMap
 import org.cdk8s.plus28.Probe
 import org.cdk8s.plus28.ServicePort
 import software.constructs.Construct
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class Mixer(
@@ -72,9 +72,4 @@ class Mixer(
                 )
             ).build()
     )
-
-    companion object {
-        val Duration.kube: org.cdk8s.Duration
-            get() = org.cdk8s.Duration.seconds(this.inWholeMilliseconds)
-    }
 }

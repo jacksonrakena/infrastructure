@@ -7,6 +7,7 @@ import org.cdk8s.plus28.ContainerSecurityContextProps
 import org.cdk8s.plus28.Cpu
 import org.cdk8s.plus28.CpuResources
 import org.cdk8s.plus28.MemoryResources
+import kotlin.time.Duration
 
 fun ContainerProps.Builder.applyCommonConfiguration(): ContainerProps.Builder {
     return this.resources(
@@ -19,3 +20,6 @@ fun ContainerProps.Builder.applyCommonConfiguration(): ContainerProps.Builder {
             ContainerSecurityContextProps.builder().readOnlyRootFilesystem(false).ensureNonRoot(false).build()
         )
 }
+
+val Duration.kube: org.cdk8s.Duration
+    get() = org.cdk8s.Duration.seconds(this.inWholeMilliseconds)

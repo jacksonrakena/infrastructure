@@ -50,7 +50,6 @@ class ProductionStack(
         credentials.githubRegistrySecret
     )
 
-
     val ident = Identity(this, "id", credentials.keycloakConfigMap, galahad, props)
 
     val jacksonbot =
@@ -64,11 +63,24 @@ class ProductionStack(
         )
 
     val mx = Mixer(this, "mixer", credentials.mixerConfigMap, credentials.githubRegistrySecret, props)
-    val mxbudget = Mxbudget(this, "mxbudget", credentials.githubRegistrySecret, credentials.mxbudgetConfigMap, props)
+    val mxbudget = Mxbudget(
+        this,
+        "mxbudget",
+        credentials.githubRegistrySecret,
+        bouncer.service,
+        credentials.mxbudgetConfigMap,
+        props
+    )
 
     val rakenaComAuTlsSecret =
-        TlsSecret(this, "rakena-com-au-cert", loadTlsSecretFromFolder("secrets/cert-rakena.com.au"))
-    val rakenaCoNzTldSecret = TlsSecret(this, "rakena-co-nz-cert", loadTlsSecretFromFolder("secrets/cert-rakena.co.nz"))
+        TlsSecret(
+            this, "rakena-com-au-cert",
+            loadTlsSecretFromFolder("secrets/cert-rakena.com.au")
+        )
+    val rakenaCoNzTldSecret = TlsSecret(
+        this, "rakena-co-nz-cert",
+        loadTlsSecretFromFolder("secrets/cert-rakena.co.nz")
+    )
 
     val ingress = Ingress(
         this, "ingress", IngressProps.builder()

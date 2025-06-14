@@ -25,43 +25,33 @@ class Identity(
     props: ChartProps? = null,
 ) : Chart(scope, id, props) {
     val deployment = Deployment(
-        this,
-        "deployment",
-        DeploymentProps.builder()
-            .replicas(1)
-            .containers(
-                listOf(
-                    ContainerProps.builder()
-                        .name("keycloak")
-                        .image("quay.io/keycloak/keycloak:26.0.7")
-                        .applyCommonConfiguration()
-                        .args(listOf("start"))
-                        .ports(
-                            listOf(
-                                ContainerPort.builder().number(8080).build()
-                            )
+        this, "deployment", DeploymentProps.builder().replicas(1).containers(
+            listOf(
+                ContainerProps.builder().name("keycloak").image("quay.io/keycloak/keycloak:26.0.7")
+                    .applyCommonConfiguration().args(listOf("start")).ports(
+                        listOf(
+                            ContainerPort.builder().number(8080).build()
                         )
-                        .readiness(Probe.fromHttpGet("/health/ready", HttpGetProbeOptions.builder().port(9000).build()))
-                        .envFrom(
-                            listOf(
-                                EnvFrom(configMap)
-                            )
+                    )
+                    .readiness(Probe.fromHttpGet("/health/ready", HttpGetProbeOptions.builder().port(9000).build()))
+                    .envFrom(
+                        listOf(
+                            EnvFrom(configMap)
                         )
-                        .envVariables(mapOf(
+                    ).envVariables(
+                        mapOf(
                             "KC_DB_URL_HOST" to EnvValue.fromValue(galahad.postgresService.name)
-                        ))
-                        .build()
-                )
+                        )
+                    ).build()
             )
-            .build()
+        ).build()
     )
 
     val service = deployment.exposeViaService(
-        DeploymentExposeViaServiceOptions.builder()
-            .ports(
-                listOf(
-                    ServicePort.builder().port(8080).targetPort(8080).build()
-                )
-            ).build()
+        DeploymentExposeViaServiceOptions.builder().ports(
+            listOf(
+                ServicePort.builder().port(8080).targetPort(8080).build()
+            )
+        ).build()
     )
 }
