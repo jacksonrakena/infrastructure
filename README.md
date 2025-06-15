@@ -157,6 +157,7 @@ Use `cdk8s` and `kubectl` to automatically bring up all resources in order:
 
 ```
 cd kube
+cdk8s import
 cdk8s synth
 kubectl apply -f dist
 ```

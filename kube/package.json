@@ -1,0 +1,12 @@
+{
+  "name": "infrastructure_kube",
+  "version": "1.0.0",
+  "description": "JCI infrastructure project",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cdk8s-cli": "^2.200.100"
+  },
+  "scripts": {
+    "build": "JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 cdk8s import && JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 cdk8s synth"
+  }
+}

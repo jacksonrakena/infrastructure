@@ -7,7 +7,7 @@ import org.cdk8s.plus28.Namespace
 import org.cdk8s.plus28.NamespaceProps
 import software.constructs.Construct
 
-class ProductionRunner(scope: Construct, id: String, options: ChartProps? = null): Chart(scope, id, options) {
+class ProductionRunner(scope: Construct, id: String, options: ChartProps? = null) : Chart(scope, id, options) {
     val namespace = Namespace(
         this,
         "prod-namespace",
