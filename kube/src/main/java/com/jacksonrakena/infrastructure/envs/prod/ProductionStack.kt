@@ -47,7 +47,8 @@ class ProductionStack(
         "gk-server",
         credentials.gradekeeperConfigMap,
         galahad.postgresService,
-        credentials.githubRegistrySecret
+        credentials.githubRegistrySecret,
+        props
     )
 
     val ident = Identity(this, "id", credentials.keycloakConfigMap, galahad, props)
