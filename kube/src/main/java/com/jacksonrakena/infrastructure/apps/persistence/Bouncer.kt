@@ -45,7 +45,7 @@ class Bouncer(
                                 "PGBOUNCER_PORT" to EnvValue.fromValue("6432"),
                                 "PGBOUNCER_POOL_MODE" to EnvValue.fromValue("transaction"),
                                 "POSTGRESQL_USERNAME" to EnvValue.fromValue("pgbouncer"),
-                                "POSTGRESQL_AUTH_USER" to EnvValue.fromValue("pgbouncer"),
+                                "PGBOUNCER_AUTH_USER" to EnvValue.fromValue("pgbouncer"),
                                 "PGBOUNCER_MAX_PREPARED_STATEMENTS" to EnvValue.fromValue("10")
                             )
                         )

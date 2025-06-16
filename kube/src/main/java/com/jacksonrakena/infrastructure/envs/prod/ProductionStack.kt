@@ -67,6 +67,7 @@ class ProductionStack(
         this,
         "mxbudget",
         credentials.githubRegistrySecret,
+        mx.service,
         bouncer.service,
         credentials.mxbudgetConfigMap,
         props

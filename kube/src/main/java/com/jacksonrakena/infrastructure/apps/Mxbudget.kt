@@ -21,6 +21,7 @@ class Mxbudget(
     scope: Construct,
     id: String,
     registrySecret: DockerConfigSecret,
+    mixerService: Service,
     bouncerService: Service,
     configMap: IConfigMap,
     props: ChartProps? = null,
@@ -51,7 +52,8 @@ class Mxbudget(
                         )
                         .envVariables(
                             mapOf(
-                                "DATABASE_URL" to EnvValue.fromValue("postgresql://mx:mx@${bouncerService.name}:6432/mx")
+                                "DATABASE_URL" to EnvValue.fromValue("postgresql://mx:mx@${bouncerService.name}:6432/mx"),
+                                "MIXER_API_HOST" to EnvValue.fromValue("http://${mixerService.name}:80")
                             )
                         )
                         .build()
