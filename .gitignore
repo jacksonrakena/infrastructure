@@ -6,3 +6,4 @@
 **/gradlew
 **/src/**/**/imports/k8s/**
 **/.DS_Store
+kube/dist

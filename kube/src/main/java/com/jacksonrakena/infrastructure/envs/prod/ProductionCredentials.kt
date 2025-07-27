@@ -73,11 +73,6 @@ class ProductionCredentials(scope: Construct, id: String, options: ChartProps) :
         "secrets/gradekeeper-server.env"
     )
 
-    val keycloakConfigMap = createNamespacedConfigMapFromFile(
-        "keycloak-config",
-        "secrets/keycloak.env"
-    )
-
     val jacksonbotConfigMap = ConfigMap(
         this,
         "jacksonbot-config",
@@ -90,13 +85,8 @@ class ProductionCredentials(scope: Construct, id: String, options: ChartProps) :
             .immutable(false).build()
     )
 
-    val mixerConfigMap = createNamespacedConfigMapFromFile(
-        "mixer-config",
-        "secrets/mixer.env"
-    )
-
-    val mxbudgetConfigMap = createNamespacedConfigMapFromFile(
-        "mxbudget-config",
-        "secrets/mxbudget.env"
+    val financeSecret = createNamespacedSecretFromFile(
+        "finance-secret",
+        "secrets/finance.env"
     )
 }

@@ -11,10 +11,7 @@ flowchart LR
         agd["50GB data volume"]
   end
  subgraph cluster["Arthur cluster"]
-        identity["Identity (Keycloak)<br>id.rakena.com.au"]
         ingress["Ingress<br>(Traefik)"]
-        mxbudget["mxbudget<br>budget.rakena.com.au"]
-        pgbouncer["pgbouncer<br>(two pods)"]
         gk["Gradekeeper Server<br>api.gradekeeper.xyz"]
         jb["Jacksonbot"]
         galahad
@@ -25,10 +22,7 @@ flowchart LR
     gk_frontend["Gradekeeper Client<br>app.gradekeeper.xyz"] --> vsec
     cf -. via direct ..-> vsec
     vsec --> ingress
-    ingress --> identity & mxbudget & gk & vw
-    pgbouncer --> pg
-    mxbudget --> pgbouncer
-    identity --> pg
+    ingress --> gk & vw
     jb --> pg
     vw --> pg & agd
     pg --> agd
@@ -38,9 +32,7 @@ flowchart LR
      pg:::k8s
      agd:::plain
      agd:::Sky
-     identity:::k8s
      ingress:::Aqua
-     mxbudget:::k8s
      pgbouncer:::Rose
      gk:::k8s
      jb:::k8s
@@ -108,7 +100,6 @@ ready for sending to the cluster.
         2. Gradekeeper Server
         3. Keycloak (Identity)
         4. Jacksonbot
-        5. Mixer & mxbudget
     4. Configures Traefik resources (`com.jacksonrakena.infrastructure.traefik.TraefikStack`):
         1. Creates service accounts, roles, and bindings.
         2. Creates a Traefik deployment configured solely to run on port 443. (`/production/traefik/02-traefik.yml`)

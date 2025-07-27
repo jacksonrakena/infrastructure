@@ -1,11 +1,8 @@
 package com.jacksonrakena.infrastructure.envs.prod
 
 import com.jacksonrakena.infrastructure.apps.GradekeeperServer
-import com.jacksonrakena.infrastructure.apps.Identity
 import com.jacksonrakena.infrastructure.apps.Jacksonbot
-import com.jacksonrakena.infrastructure.apps.Mixer
-import com.jacksonrakena.infrastructure.apps.Mxbudget
-import com.jacksonrakena.infrastructure.apps.persistence.Bouncer
+import com.jacksonrakena.infrastructure.apps.Mx2
 import com.jacksonrakena.infrastructure.apps.persistence.Galahad
 import com.jacksonrakena.infrastructure.traefik.TraefikStack
 import com.jacksonrakena.infrastructure.util.loadTlsSecretFromFolder
@@ -39,8 +36,6 @@ class ProductionStack(
         props
     )
 
-    val bouncer = Bouncer(this, "bouncer", galahad, props)
-
     val tf = TraefikStack(this, "traefik", props)
     val gks = GradekeeperServer(
         this,
@@ -50,8 +45,6 @@ class ProductionStack(
         credentials.githubRegistrySecret,
         props
     )
-
-    val ident = Identity(this, "id", credentials.keycloakConfigMap, galahad, props)
 
     val jacksonbot =
         Jacksonbot(
@@ -63,14 +56,12 @@ class ProductionStack(
             props
         )
 
-    val mx = Mixer(this, "mixer", credentials.mixerConfigMap, credentials.githubRegistrySecret, props)
-    val mxbudget = Mxbudget(
+    val mx2 = Mx2(
         this,
-        "mxbudget",
+        "mx2",
         credentials.githubRegistrySecret,
-        mx.service,
-        bouncer.service,
-        credentials.mxbudgetConfigMap,
+        galahad,
+        credentials.financeSecret,
         props
     )
 
@@ -102,7 +93,7 @@ class ProductionStack(
                         .hosts(
                             listOf(
                                 "id.rakena.com.au",
-                                "budget.rakena.com.au",
+                                "finance.rakena.com.au",
                                 "vault.rakena.com.au"
                             )
                         )
@@ -119,14 +110,9 @@ class ProductionStack(
             .rules(
                 listOf(
                     IngressRule.builder()
-                        .host("budget.rakena.com.au")
+                        .host("finance.rakena.com.au")
                         .pathType(HttpIngressPathType.PREFIX)
-                        .backend(IngressBackend.fromService(mxbudget.service))
-                        .build(),
-                    IngressRule.builder()
-                        .host("id.rakena.com.au")
-                        .pathType(HttpIngressPathType.PREFIX)
-                        .backend(IngressBackend.fromService(ident.service))
+                        .backend(IngressBackend.fromService(mx2.service))
                         .build(),
                     IngressRule.builder()
                         .host("vault.rakena.com.au")
