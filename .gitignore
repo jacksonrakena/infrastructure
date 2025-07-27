@@ -1,0 +1,8 @@
+**/.gradle
+**/.kotlin
+**/build
+**/secrets
+**/.idea
+**/gradlew
+**/src/**/**/imports/k8s/**
+**/.DS_Store
