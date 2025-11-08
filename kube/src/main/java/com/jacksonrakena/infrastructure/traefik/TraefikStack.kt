@@ -126,7 +126,7 @@ class TraefikStack(scope: Construct, id: String, options: ChartProps? = null): C
                             listOf(
                                 Container.builder()
                                     .name("traefik")
-                                    .image("traefik:v3.4")
+                                    .image("docker.io/library/traefik:v3.4")
                                     .args(listOf(
                                         "--entrypoints.websecure.address=:443",
                                         "--entrypoints.websecure.http.tls=true",

@@ -40,7 +40,7 @@ class Galahad(
                 listOf(
                     ContainerProps.builder()
                         .name("vaultwarden")
-                        .image("vaultwarden/server")
+                        .image("docker.io/vaultwarden/server")
                         .applyCommonConfiguration()
                         .ports(
                             listOf(
@@ -65,7 +65,7 @@ class Galahad(
                         .build(),
                     ContainerProps.builder()
                         .name("postgres")
-                        .image("postgres:15")
+                        .image("docker.io/library/postgres:15")
                         .applyCommonConfiguration()
                         .ports(
                             listOf(

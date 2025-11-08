@@ -39,7 +39,7 @@ class Mx2(
                     ContainerProps.builder()
                         .name("redis")
                         .applyCommonConfiguration()
-                        .image("redis:latest")
+                        .image("docker.io/library/redis:latest")
                         .ports(
                             listOf(
                                 ContainerPort.builder().number(6379).build()
