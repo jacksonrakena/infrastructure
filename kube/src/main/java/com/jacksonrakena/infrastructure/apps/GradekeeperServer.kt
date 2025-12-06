@@ -3,6 +3,7 @@ package com.jacksonrakena.infrastructure.apps
 import com.jacksonrakena.infrastructure.util.applyCommonConfiguration
 import org.cdk8s.Chart
 import org.cdk8s.ChartProps
+import org.cdk8s.Duration
 import org.cdk8s.plus28.ContainerPort
 import org.cdk8s.plus28.ContainerProps
 import org.cdk8s.plus28.Deployment
@@ -13,11 +14,15 @@ import org.cdk8s.plus28.DeploymentStrategyRollingUpdateOptions
 import org.cdk8s.plus28.DockerConfigSecret
 import org.cdk8s.plus28.EnvFrom
 import org.cdk8s.plus28.EnvValue
+import org.cdk8s.plus28.HttpGetProbeOptions
 import org.cdk8s.plus28.IConfigMap
 import org.cdk8s.plus28.PercentOrAbsolute
+import org.cdk8s.plus28.Probe
 import org.cdk8s.plus28.Service
 import org.cdk8s.plus28.ServicePort
 import software.constructs.Construct
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toDuration
 
 class GradekeeperServer(
     scope: Construct,
@@ -58,6 +63,15 @@ class GradekeeperServer(
                         .envVariables(
                             mapOf(
                                 "DATABASE_URL" to EnvValue.fromValue("postgresql://gradekeeper:gradekeeper@${postgresService.name}/gradekeeper")
+                            )
+                        )
+                        .liveness(
+                            Probe.fromHttpGet(
+                                "/health",
+                                HttpGetProbeOptions.builder()
+                                    .initialDelaySeconds(Duration.seconds(10))
+                                    .port(3000)
+                                    .build()
                             )
                         )
                         .build()

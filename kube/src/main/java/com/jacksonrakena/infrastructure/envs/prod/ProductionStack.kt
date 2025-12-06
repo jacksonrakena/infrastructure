@@ -2,7 +2,7 @@ package com.jacksonrakena.infrastructure.envs.prod
 
 import com.jacksonrakena.infrastructure.apps.GradekeeperServer
 import com.jacksonrakena.infrastructure.apps.Jacksonbot
-import com.jacksonrakena.infrastructure.apps.Mx2
+import com.jacksonrakena.infrastructure.apps.Minecraft
 import com.jacksonrakena.infrastructure.apps.persistence.Galahad
 import com.jacksonrakena.infrastructure.traefik.TraefikStack
 import com.jacksonrakena.infrastructure.util.loadTlsSecretFromFolder
@@ -56,14 +56,7 @@ class ProductionStack(
             props
         )
 
-    val mx2 = Mx2(
-        this,
-        "mx2",
-        credentials.githubRegistrySecret,
-        galahad,
-        credentials.financeSecret,
-        props
-    )
+    val mc = Minecraft(this, "mc", credentials.githubRegistrySecret, props)
 
     val rakenaComAuTlsSecret =
         TlsSecret(
@@ -93,7 +86,6 @@ class ProductionStack(
                         .hosts(
                             listOf(
                                 "id.rakena.com.au",
-                                "finance.rakena.com.au",
                                 "vault.rakena.com.au"
                             )
                         )
@@ -109,11 +101,6 @@ class ProductionStack(
             )
             .rules(
                 listOf(
-                    IngressRule.builder()
-                        .host("finance.rakena.com.au")
-                        .pathType(HttpIngressPathType.PREFIX)
-                        .backend(IngressBackend.fromService(mx2.service))
-                        .build(),
                     IngressRule.builder()
                         .host("vault.rakena.com.au")
                         .pathType(HttpIngressPathType.PREFIX)

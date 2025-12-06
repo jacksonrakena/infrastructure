@@ -84,9 +84,4 @@ class ProductionCredentials(scope: Construct, id: String, options: ChartProps) :
             )
             .immutable(false).build()
     )
-
-    val financeSecret = createNamespacedSecretFromFile(
-        "finance-secret",
-        "secrets/finance.env"
-    )
 }

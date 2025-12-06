@@ -12,14 +12,11 @@ import kotlin.time.Duration
 fun ContainerProps.Builder.applyCommonConfiguration(): ContainerProps.Builder {
     return this.resources(
         ContainerResources.builder()
-            .cpu(CpuResources.builder().limit(Cpu.millis(1000)).request(Cpu.millis(0)).build())
-            .memory(MemoryResources.builder().limit(Size.gibibytes(1000)).request(Size.gibibytes(0)).build())
+            .cpu(CpuResources.builder().build())
+            .memory(MemoryResources.builder().request(Size.mebibytes(500)).build())
             .build()
     )
         .securityContext(
             ContainerSecurityContextProps.builder().readOnlyRootFilesystem(false).ensureNonRoot(false).build()
         )
 }
-
-val Duration.kube: org.cdk8s.Duration
-    get() = org.cdk8s.Duration.seconds(this.inWholeMilliseconds)
