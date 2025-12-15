@@ -1,5 +1,6 @@
 package com.jacksonrakena.infrastructure.envs.prod
 
+import com.jacksonrakena.infrastructure.apps.Blank
 import com.jacksonrakena.infrastructure.apps.GradekeeperServer
 import com.jacksonrakena.infrastructure.apps.Jacksonbot
 import com.jacksonrakena.infrastructure.apps.Minecraft
@@ -56,7 +57,7 @@ class ProductionStack(
             props
         )
 
-    val mc = Minecraft(this, "mc", credentials.githubRegistrySecret, props)
+    //val mc = Minecraft(this, "mc", credentials.githubRegistrySecret, props)
 
     val rakenaComAuTlsSecret =
         TlsSecret(
@@ -67,6 +68,13 @@ class ProductionStack(
         this, "rakena-co-nz-cert",
         loadTlsSecretFromFolder("secrets/cert-rakena.co.nz")
     )
+
+    val jacksonrakenaComTlsSecret = TlsSecret(
+        this, "jacksonrakena-com-cert",
+        loadTlsSecretFromFolder("secrets/cert-jacksonrakena.com")
+    )
+
+    val blank = Blank(this, "blank", credentials.githubRegistrySecret, props)
 
     val ingress = Ingress(
         this, "ingress", IngressProps.builder()
@@ -96,7 +104,13 @@ class ProductionStack(
                             listOf(
                                 "vault.rakena.co.nz"
                             )
-                        ).build()
+                        ).build(),
+                    IngressTls.builder().secret(jacksonrakenaComTlsSecret)
+                        .hosts(
+                            listOf(
+                                "go.jacksonrakena.com"
+                            )
+                        ).build(),
                 )
             )
             .rules(
@@ -115,6 +129,11 @@ class ProductionStack(
                         .host("api.gradekeeper.xyz")
                         .pathType(HttpIngressPathType.PREFIX)
                         .backend(IngressBackend.fromService(gks.service))
+                        .build(),
+                    IngressRule.builder()
+                        .host("go.jacksonrakena.com")
+                        .pathType(HttpIngressPathType.PREFIX)
+                        .backend(IngressBackend.fromService(blank.service))
                         .build(),
                 )
             )
