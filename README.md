@@ -57,7 +57,7 @@ This repository holds a variety of resources for bringing up all of my self-host
 
 1. Terraform configuration for Oracle Cloud Infrastructure (OCI) that can provision a Kubernetes cluster and associated
    networking infrastructure
-2. A `cdk8s` Kotlin project that can compile to a complete Kubernetes manifest for all resources running on-cluster
+2. A `cdk8s` TypeScript project that can compile to a complete Kubernetes manifest for all resources running on-cluster
     1. This includes a Traefik ingest controller, and TLS certificate provisioning
 
 This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a
@@ -86,23 +86,22 @@ This folder provisions the raw Kubernetes cluster and associated resources on Or
 
 ## Kubernetes overview (`/kube`)
 
-The kube folder is a `cdk8s` Kotlin/Gradle project that creates a complete set of Kubernetes manifests in the
+The kube folder is a `cdk8s` TypeScript project that creates a complete set of Kubernetes manifests in the
 `/kube/dist` folder,
 ready for sending to the cluster.
 
 1. `ProductionRunner` creates the production namespace and `ProductionStack`.
-2. `com.jacksonrakena.infrastructure.envs.prod.ProductionStack`:
+2. `ProductionStack` (`src/envs/prod/production-stack.ts`):
     1. Loads credentials from a local directory as Kubernetes secrets and configmap resources
     2. Creates the global data volume (`ProductionBlockStorage`)
     3. Provisions all apps, linking them to credentials and the data volume as necessary
-        1. Pgbouncer
-            1. `ProductionStack` connects pgbouncer to the dynamically-generated Postgres service name.
+        1. Galahad (Vaultwarden + Postgres)
         2. Gradekeeper Server
-        3. Keycloak (Identity)
-        4. Jacksonbot
-    4. Configures Traefik resources (`com.jacksonrakena.infrastructure.traefik.TraefikStack`):
+        3. Jacksonbot
+        4. Blank
+    4. Configures Traefik resources (`src/traefik/traefik-stack.ts`):
         1. Creates service accounts, roles, and bindings.
-        2. Creates a Traefik deployment configured solely to run on port 443. (`/production/traefik/02-traefik.yml`)
+        2. Creates a Traefik deployment configured solely to run on port 443.
         3. Creates a `LoadBalancer` service configured to an Oracle Cloud Network Load Balancer, and exposes port 443 to
            the
            Traefik deployment
@@ -133,7 +132,7 @@ These secrets are excluded for security reasons.
 
 #### Load balancer setup
 
-You'll need to edit `com.jacksonrakena.infrastructure.traefik.TraefikStack` to have your Oracle Network Load Balancer
+You'll need to edit `src/traefik/traefik-stack.ts` to have your Oracle Network Load Balancer
 settings.
 
 #### Bring everything up
@@ -148,8 +147,7 @@ Use `cdk8s` and `kubectl` to automatically bring up all resources in order:
 
 ```
 cd kube
-cdk8s import
-cdk8s synth
+npm run build
 kubectl apply -f dist
 ```
 
@@ -165,6 +163,6 @@ kubectl apply -f dist --prune --all
 
 ## Copyright
 
-**&copy; 2023&mdash;2025 Jackson Rakena**  
+**&copy; 2023&mdash;2026 Jackson Rakena**  
 Use is permitted for educational and personal purposes only.  
 Commercial use is forbidden without written consent of the project author.

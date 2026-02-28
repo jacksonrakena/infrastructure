@@ -1,4 +1,0 @@
-language: java
-app: ./gradlew run
-imports:
-  - k8s

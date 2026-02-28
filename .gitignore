@@ -1,9 +1,7 @@
-**/.gradle
-**/.kotlin
-**/build
+**/.DS_Store
 **/secrets
 **/.idea
-**/gradlew
-**/src/**/**/imports/k8s/**
-**/.DS_Store
-kube/dist
+dist
+node_modules
+build
+imports

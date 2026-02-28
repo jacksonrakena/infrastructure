@@ -1,0 +1,23 @@
+{
+  "name": "infra",
+  "version": "1.0.0",
+  "description": "JCI infrastructure project",
+  "license": "UNLICENSED",
+  "private": "true",
+  "main": "src/main.ts",
+  "scripts": {
+    "build": "JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 cdk8s import && JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1 cdk8s synth"
+  },
+  "dependencies": {
+    "cdk8s": "^2.69.73",
+    "cdk8s-cli": "^2.200.100",
+    "cdk8s-plus-28": "^2.5.6",
+    "constructs": "^10.4.2",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "ts-node": "^10.9.2",
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,9 +1,5 @@
-.PHONY: kube plan
+.PHONY: kube
 
 kube:
 	@echo "Building Kubernetes manifest..."
-	@cd kube && yarn build
-
-plan:
-	@echo "Running Terraform plan..."
-	@cd terraform && terraform plan
+	@npm run build
