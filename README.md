@@ -53,12 +53,7 @@ flowchart LR
     style galahad fill:#BBDEFB
 ```
 
-This repository holds a variety of resources for bringing up all of my self-hosted services, including:
-
-1. Terraform configuration for Oracle Cloud Infrastructure (OCI) that can provision a Kubernetes cluster and associated
-   networking infrastructure
-2. A `cdk8s` TypeScript project that can compile to a complete Kubernetes manifest for all resources running on-cluster
-    1. This includes a Traefik ingest controller, and TLS certificate provisioning
+This repository holds a variety of resources for bringing up all of my self-hosted services, including a `cdk8s` TypeScript project that can compile to a complete Kubernetes manifest for all resources running on-cluster. This includes a Traefik ingest controller, and TLS certificate provisioning.
 
 This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a
 fresh cluster. All resources are deployed in their own namespace (`production`/`canary`/`development`) to avoid
@@ -70,24 +65,11 @@ security reasons.
 I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you
 do, you'll need to replace the secrets with your own.
 
-## Infrastructure overview (`/terraform`)
 
-This folder provisions the raw Kubernetes cluster and associated resources on Oracle Cloud Infrastructure (OCI).
+## Kubernetes overview
 
-| File                     | Role                                                                          |
-|--------------------------|-------------------------------------------------------------------------------|
-| `budget.tf`              | Configures OCI budget rules                                                   |
-| `cluster.tf`             | Configures the OKE Cluster Engine resource and main node pool                 |
-| `license_manager.tf`     | Configures OCI License Manager                                                |
-| `networking.tf`          | Configures the VCN, route tables, and gateways for IGW/NAT                    |
-| `networking_security.tf` | Configures the inter- and intra- node security lists and ingress/egress rules |
-| `networking_subnets.tf`  | Configures the node, service, and control plane subnets                       |
-| `provider.tf`            | Configures the OCI provider                                                   |
-
-## Kubernetes overview (`/kube`)
-
-The kube folder is a `cdk8s` TypeScript project that creates a complete set of Kubernetes manifests in the
-`/kube/dist` folder,
+This is  TypeScript project that creates a complete set of Kubernetes manifests in the
+`/dist` folder,
 ready for sending to the cluster.
 
 1. `ProductionRunner` creates the production namespace and `ProductionStack`.
@@ -114,13 +96,13 @@ ready for sending to the cluster.
               the future.
     5. Creates a Traefik instance with the production routing table.
 
-### Secrets (`/kube/secrets`)
+### Secrets (`/secrets`)
 
 This directory contains production-level secrets that the stack depends on.  
 These secrets are excluded for security reasons.
 
 | Name                                                                            | Type                             | Expected value                                                                                                                                                                                        |
-|---------------------------------------------------------------------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `galahad-pg` (galahad-secret.env)                                               | Secret/Opaque                    | `db`, `username`, and `password` control the username and password for the Galahad Postgres instance.                                                                                                 |
 | `gh-container-registry` (docker-registry-config.json)                           | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry                                                                                                                                                             |
 | `gradekeeper-config` (gradekeeper-server.env)                                   | ConfigMap                        | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs).                                           |
