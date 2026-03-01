@@ -18,8 +18,7 @@ export class Mixer extends Chart {
     super(scope, id, props);
 
     const deployment = new kplus.Deployment(this, "backend", {
-      replicas: 1,
-      strategy: kplus.DeploymentStrategy.recreate(),
+      replicas: 3,
       containers: [
         applyCommonConfiguration({
           name: "mixer-api",
@@ -30,10 +29,20 @@ export class Mixer extends Chart {
             SPRING_DATASOURCE_URL: kplus.EnvValue.fromValue(
               `jdbc:postgresql://${postgresService.name}/mixer`,
             ),
+            SPRING_PROFILES_ACTIVE: kplus.EnvValue.fromValue("prod"),
+            SPRINGDOC_API_DOCS_ENABLED: kplus.EnvValue.fromValue("false"),
+            SPRINGDOC_SWAGGER_UI_ENABLED: kplus.EnvValue.fromValue("false"),
+            MIXER_REFRESH_FX_INITIAL: kplus.EnvValue.fromValue("-1"),
+            MIXER_REFRESH_AGGREGATIONS_INITIAL: kplus.EnvValue.fromValue("-1"),
           },
-          liveness: kplus.Probe.fromHttpGet("/actuator/health", {
-            initialDelaySeconds: Duration.seconds(10),
-            periodSeconds: Duration.seconds(3),
+          liveness: kplus.Probe.fromHttpGet("/actuator/health/liveness", {
+            initialDelaySeconds: Duration.seconds(20),
+            periodSeconds: Duration.seconds(10),
+            port: 8080,
+          }),
+          readiness: kplus.Probe.fromHttpGet("/actuator/health/readiness", {
+            initialDelaySeconds: Duration.seconds(20),
+            periodSeconds: Duration.seconds(15),
             port: 8080,
           }),
         }),
@@ -46,7 +55,7 @@ export class Mixer extends Chart {
     });
 
     const frontendDeployment = new kplus.Deployment(this, "frontend", {
-      replicas: 2,
+      replicas: 3,
       containers: [
         applyCommonConfiguration({
           name: "mixer-frontend",
