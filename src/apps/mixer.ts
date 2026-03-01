@@ -34,6 +34,8 @@ export class Mixer extends Chart {
             SPRINGDOC_SWAGGER_UI_ENABLED: kplus.EnvValue.fromValue("false"),
             MIXER_REFRESH_FX_INITIAL: kplus.EnvValue.fromValue("-1"),
             MIXER_REFRESH_AGGREGATIONS_INITIAL: kplus.EnvValue.fromValue("-1"),
+            SPRING_SESSION_TIMEOUT: kplus.EnvValue.fromValue("8h"),
+            MIXER_MARKETS_SOURCES_ENABLED: kplus.EnvValue.fromValue("yfin"),
           },
           liveness: kplus.Probe.fromHttpGet("/actuator/health/liveness", {
             initialDelaySeconds: Duration.seconds(20),
