@@ -1,0 +1,14 @@
+src/apps/mixer.ts
+  h_e41bc4ae95b990 37-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3abd8bbe3cb097ab2a7783cc6971a8d65a6f6b43",
+  "prompts": {},
+  "humans": {
+    "h_e41bc4ae95b990": {
+      "author": "jacksonrakena"
+    }
+  }
+}
