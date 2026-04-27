@@ -6,7 +6,6 @@ import { ProductionBlockStorage } from "./production-block-storage";
 import { Galahad } from "../../apps/persistence/galahad";
 import { TraefikStack } from "../../traefik/traefik-stack";
 import { GradekeeperServer } from "../../apps/gradekeeper-server";
-import { Jacksonbot } from "../../apps/jacksonbot";
 import { Blank } from "../../apps/blank";
 import { loadTlsSecretFromFolder } from "../../util/secret-utils";
 import { Mixer } from "../../apps/mixer";
@@ -36,15 +35,6 @@ export class ProductionStack extends Chart {
       credentials.gradekeeperConfigMap,
       galahad.postgresService,
       credentials.githubRegistrySecret,
-      props,
-    );
-
-    const jacksonbot = new Jacksonbot(
-      this,
-      "jacksonbot",
-      credentials.jacksonbotConfigMap,
-      credentials.githubRegistrySecret,
-      galahad.postgresService,
       props,
     );
 
