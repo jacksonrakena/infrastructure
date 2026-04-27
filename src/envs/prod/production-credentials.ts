@@ -21,7 +21,6 @@ export class ProductionCredentials extends Chart {
   public readonly postgresSecret: kplus.Secret;
   public readonly githubRegistrySecret: kplus.DockerConfigSecret;
   public readonly gradekeeperConfigMap: kplus.IConfigMap;
-  public readonly jacksonbotConfigMap: kplus.ConfigMap;
   public readonly mixerBackendConfigMap: kplus.IConfigMap;
 
   constructor(scope: Construct, id: string, props: ChartProps) {
@@ -57,16 +56,6 @@ export class ProductionCredentials extends Chart {
         data: createStringDataFromFile("secrets/gradekeeper-server.env"),
       },
     );
-
-    this.jacksonbotConfigMap = new kplus.ConfigMap(this, "jacksonbot-config", {
-      immutable: false,
-      data: {
-        "jacksonbot.appsettings.json": fs.readFileSync(
-          "secrets/jacksonbot-config.json",
-          "utf-8",
-        ),
-      },
-    });
 
     this.mixerBackendConfigMap = new kplus.ConfigMap(
       this,
