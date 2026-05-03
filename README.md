@@ -5,40 +5,30 @@ flowchart LR
  subgraph cf_tls["Oracle NLB"]
         vsec["Default Security List<br>arthur_svclb_seclist"]
   end
- subgraph galahad["Galahad (single-pod)"]
-        vw["Vaultwarden<br>vault.rakena.co.nz"]
-        pg["Postgres 15"]
-        agd["50GB data volume"]
-  end
+
  subgraph cluster["Arthur cluster"]
-        ingress["Ingress<br>(Traefik)"]
+      pg["CNPG Single-Replica Postgres"]
+        ingress["Gateway API<br>(Traefik)"]
+        vw["Vaultwarden<br>vault.rakena.co.nz"]
         gk["Gradekeeper Server<br>api.gradekeeper.xyz"]
-        jb["Jacksonbot"]
-        galahad
+        fcs["FCS"]
   end
     client(["Internet"]) -..-> cf["Cloudflare"]
-    tfx["Terraform<br><code>terraform</code>"] -- Provisions --> cluster
-    tfx --> vsec
     gk_frontend["Gradekeeper Client<br>app.gradekeeper.xyz"] --> vsec
     cf -. via direct ..-> vsec
     vsec --> ingress
+    fcs --> pg
     ingress --> gk & vw
-    jb --> pg
-    vw --> pg & agd
-    pg --> agd
+    vw --> pg
     gk --> pg
     cf -- Pages --> gk_frontend
      vw:::k8s
      pg:::k8s
-     agd:::plain
-     agd:::Sky
      ingress:::Aqua
-     pgbouncer:::Rose
      gk:::k8s
-     jb:::k8s
+     fcs:::k8s
      client:::plain
      cf:::cloudflare
-     tfx:::Class_01
      cluster:::cluster
      gk_frontend:::Peach
     classDef plain fill:#ddd,stroke:#fff,stroke-width:4px,color:#000
@@ -50,7 +40,6 @@ flowchart LR
     classDef Peach stroke-width:1px, stroke-dasharray:none, stroke:#FBB35A, fill:#FFEFDB, color:#8F632D
     classDef Aqua stroke-width:1px, stroke-dasharray:none, stroke:#46EDC8, fill:#DEFFF8, color:#378E7A
     classDef Rose stroke-width:1px, stroke-dasharray:none, stroke:#FF5978, fill:#FFDFE5, color:#8E2236
-    style galahad fill:#BBDEFB
 ```
 
 This repository holds a variety of resources for bringing up all of my self-hosted services, including a `cdk8s` TypeScript project that can compile to a complete Kubernetes manifest for all resources running on-cluster. This includes a Traefik ingest controller, and TLS certificate provisioning.
