@@ -12,7 +12,6 @@ export class Mixer extends Chart {
     id: string,
     configMap: kplus.IConfigMap,
     registrySecret: kplus.DockerConfigSecret,
-    postgresService: kplus.Service,
     props?: ChartProps,
   ) {
     super(scope, id, props);
@@ -27,7 +26,7 @@ export class Mixer extends Chart {
           envFrom: [new kplus.EnvFrom(configMap)],
           envVariables: {
             SPRING_DATASOURCE_URL: kplus.EnvValue.fromValue(
-              `jdbc:postgresql://${postgresService.name}/mixer`,
+              `jdbc:postgresql://leode-rw/mixer`,
             ),
             SPRING_PROFILES_ACTIVE: kplus.EnvValue.fromValue("prod"),
             SPRINGDOC_API_DOCS_ENABLED: kplus.EnvValue.fromValue("false"),

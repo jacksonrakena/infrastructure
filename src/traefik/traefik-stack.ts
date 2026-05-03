@@ -7,13 +7,14 @@ import {
   KubeService,
   IntOrString,
 } from "../../imports/k8s";
+import { GatewayClass } from "../../imports/gateway.networking.k8s.io";
 
 function makeCustomApiResources(
   apiGroup: string,
-  resourceTypes: string[]
+  resourceTypes: string[],
 ): kplus.IApiEndpoint[] {
   return resourceTypes.map((rt) =>
-    kplus.ApiResource.custom({ apiGroup, resourceType: rt })
+    kplus.ApiResource.custom({ apiGroup, resourceType: rt }),
   );
 }
 
@@ -24,7 +25,7 @@ export class TraefikStack extends Chart {
     const serviceAccount = new kplus.ServiceAccount(
       this,
       "traefik-service-account",
-      { automountToken: true }
+      { automountToken: true },
     );
 
     const clusterRole = new kplus.ClusterRole(this, "cluster-role", {
@@ -35,46 +36,13 @@ export class TraefikStack extends Chart {
             kplus.ApiResource.SERVICES,
             kplus.ApiResource.SECRETS,
             kplus.ApiResource.NODES,
-          ],
-        },
-        {
-          verbs: ["list", "watch"],
-          endpoints: [kplus.ApiResource.ENDPOINT_SLICES],
-        },
-        {
-          verbs: ["get", "list", "watch"],
-          endpoints: [
-            kplus.ApiResource.INGRESSES,
-            kplus.ApiResource.INGRESS_CLASSES,
-          ],
-        },
-        {
-          verbs: ["update"],
-          endpoints: [
+            kplus.ApiResource.NAMESPACES,
+            kplus.ApiResource.ENDPOINT_SLICES,
             kplus.ApiResource.custom({
-              apiGroup: "networking.k8s.io",
-              resourceType: "ingresses/status",
-            }),
-            kplus.ApiResource.custom({
-              apiGroup: "extensions",
-              resourceType: "ingresses/status",
+              apiGroup: "gateway.networking.k8s.io",
+              resourceType: "*",
             }),
           ],
-        },
-        {
-          verbs: ["get", "list", "watch"],
-          endpoints: makeCustomApiResources("traefik.io", [
-            "middlewares",
-            "middlewaretcps",
-            "ingressroutes",
-            "traefikservices",
-            "ingressroutetcps",
-            "ingressrouteudps",
-            "tlsoptions",
-            "tlsstores",
-            "serverstransports",
-            "serverstransporttcps",
-          ]),
         },
       ],
     });
@@ -130,15 +98,19 @@ export class TraefikStack extends Chart {
                 args: [
                   "--entrypoints.websecure.address=:443",
                   "--entrypoints.websecure.http.tls=true",
-                  "--providers.kubernetesingress=true",
+                  "--providers.kubernetesgateway",
                 ],
-                ports: [
-                  { name: "websecure", containerPort: 443 },
-                ],
+                ports: [{ name: "websecure", containerPort: 443 }],
               },
             ],
           },
         },
+      },
+    });
+    new GatewayClass(this, "gateway-class", {
+      metadata: { name: "traefik-gateway-class", namespace: this.namespace },
+      spec: {
+        controllerName: "traefik.io/gateway-controller",
       },
     });
   }

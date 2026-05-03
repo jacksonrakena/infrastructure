@@ -2,3 +2,6 @@ language: typescript
 app: npx ts-node src/main.ts
 imports:
   - k8s
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
+  - https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.29/releases/cnpg-1.29.0.yaml
+  - https://raw.githubusercontent.com/traefik/traefik/v3.6.15/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml

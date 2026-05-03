@@ -18,7 +18,6 @@ function createStringDataFromFile(fileName: string): Record<string, string> {
 
 export class ProductionCredentials extends Chart {
   public readonly vaultwardenSecret: kplus.Secret;
-  public readonly postgresSecret: kplus.Secret;
   public readonly githubRegistrySecret: kplus.DockerConfigSecret;
   public readonly gradekeeperConfigMap: kplus.IConfigMap;
   public readonly mixerBackendConfigMap: kplus.IConfigMap;
@@ -28,11 +27,6 @@ export class ProductionCredentials extends Chart {
 
     this.vaultwardenSecret = new kplus.Secret(this, "vault-secret", {
       stringData: createStringDataFromFile("secrets/vaultwarden.env"),
-      immutable: false,
-    });
-
-    this.postgresSecret = new kplus.Secret(this, "pg-secret", {
-      stringData: createStringDataFromFile("secrets/galahad-secret.env"),
       immutable: false,
     });
 

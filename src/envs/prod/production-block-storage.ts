@@ -5,11 +5,11 @@ import { KubeStorageClass } from "../../../imports/k8s";
 
 export class ProductionBlockStorage extends Chart {
   public readonly volumeClaim: kplus.PersistentVolumeClaim;
-
+  public readonly ociFreeStorageClass: KubeStorageClass;
   constructor(scope: Construct, id: string, props?: ChartProps) {
     super(scope, id, props);
 
-    const storageClass = new KubeStorageClass(
+    this.ociFreeStorageClass = new KubeStorageClass(
       this,
       "oci-free-storage-class",
       {
@@ -19,7 +19,7 @@ export class ProductionBlockStorage extends Chart {
         reclaimPolicy: "Retain",
         volumeBindingMode: "WaitForFirstConsumer",
         allowVolumeExpansion: true,
-      }
+      },
     );
 
     this.volumeClaim = new kplus.PersistentVolumeClaim(
@@ -27,15 +27,15 @@ export class ProductionBlockStorage extends Chart {
       "global-data-volume-claim",
       {
         metadata: { name: "arthur-global-data" },
-        storageClassName: storageClass.name,
+        storageClassName: this.ociFreeStorageClass.name,
         accessModes: [kplus.PersistentVolumeAccessMode.READ_WRITE_ONCE],
         storage: Size.gibibytes(50),
         volume: kplus.PersistentVolume.fromPersistentVolumeName(
           this,
           "pvc-hard-link",
-          "csi-57c34efd-2ee2-48e8-9d30-6c960576bd44"
+          "csi-57c34efd-2ee2-48e8-9d30-6c960576bd44",
         ),
-      }
+      },
     );
   }
 }

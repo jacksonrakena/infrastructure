@@ -3,12 +3,20 @@ import { Chart, ChartProps } from "cdk8s";
 import * as kplus from "cdk8s-plus-28";
 import { ProductionCredentials } from "./production-credentials";
 import { ProductionBlockStorage } from "./production-block-storage";
-import { Galahad } from "../../apps/persistence/galahad";
+import { Vault } from "../../apps/vault";
 import { TraefikStack } from "../../traefik/traefik-stack";
 import { GradekeeperServer } from "../../apps/gradekeeper-server";
 import { Blank } from "../../apps/blank";
 import { loadTlsSecretFromFolder } from "../../util/secret-utils";
 import { Mixer } from "../../apps/mixer";
+import { LeodeCluster } from "../../apps/persistence/leode";
+import {
+  Gateway,
+  GatewaySpecListenersAllowedRoutesNamespacesFrom,
+  GatewaySpecListenersTlsMode,
+  HttpRoute,
+  HttpRouteSpecRulesMatchesPathType,
+} from "../../../imports/gateway.networking.k8s.io";
 
 export class ProductionStack extends Chart {
   constructor(scope: Construct, id: string, props: ChartProps) {
@@ -18,12 +26,18 @@ export class ProductionStack extends Chart {
 
     const storage = new ProductionBlockStorage(this, id, props);
 
-    const galahad = new Galahad(
+    const vault = new Vault(
       this,
-      "galahad",
+      "vault",
       credentials.vaultwardenSecret,
-      credentials.postgresSecret,
       storage.volumeClaim,
+      props,
+    );
+
+    const leode = new LeodeCluster(
+      this,
+      "leode",
+      storage.ociFreeStorageClass,
       props,
     );
 
@@ -33,7 +47,6 @@ export class ProductionStack extends Chart {
       this,
       "gk-server",
       credentials.gradekeeperConfigMap,
-      galahad.postgresService,
       credentials.githubRegistrySecret,
       props,
     );
@@ -43,7 +56,6 @@ export class ProductionStack extends Chart {
       "mixer",
       credentials.mixerBackendConfigMap,
       credentials.githubRegistrySecret,
-      galahad.postgresService,
       props,
     );
 
@@ -70,63 +82,116 @@ export class ProductionStack extends Chart {
       props,
     );
 
-    new kplus.Ingress(this, "ingress", {
+    const gateway = new Gateway(this, "gateway", {
       metadata: {
-        annotations: {
-          "traefik.ingress.kubernetes.io/router.tls": "true",
-          "traefik.ingress.kubernetes.io/router.entrypoints": "websecure",
-        },
+        name: "traefik-gateway",
+        namespace: this.namespace,
       },
-      tls: [
-        {
-          secret: rakenaComAuTlsSecret,
-          hosts: [
-            "id.rakena.com.au",
-            "vault.rakena.com.au",
-            "finance.rakena.com.au",
+      spec: {
+        gatewayClassName: "traefik-gateway-class",
+        infrastructure: {
+          annotations: {
+            "oci.oraclecloud.com/load-balancer-type": "nlb",
+          },
+        },
+        listeners: [
+          {
+            name: "https",
+            protocol: "HTTPS",
+            port: 443,
+            tls: {
+              mode: GatewaySpecListenersTlsMode.TERMINATE,
+              certificateRefs: [
+                rakenaComAuTlsSecret,
+                rakenaCoNzTlsSecret,
+                jacksonrakenaComTlsSecret,
+              ].map((secret) => ({
+                name: secret.name,
+                namespace: this.namespace,
+              })),
+            },
+            allowedRoutes: {
+              namespaces: {
+                from: GatewaySpecListenersAllowedRoutesNamespacesFrom.SAME,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const createRoute = (
+      name: string,
+      hostname: string,
+      service: kplus.Service,
+    ) =>
+      new HttpRoute(this, name, {
+        metadata: {
+          name,
+          namespace: this.namespace,
+        },
+        spec: {
+          parentRefs: [
+            {
+              name: "traefik-gateway",
+            },
+          ],
+
+          hostnames: [hostname],
+          rules: [
+            {
+              matches: [
+                {
+                  path: {
+                    type: HttpRouteSpecRulesMatchesPathType.PATH_PREFIX,
+                    value: "/",
+                  },
+                },
+              ],
+              backendRefs: [
+                {
+                  name: service.name,
+                  port: service.ports[0].port,
+                },
+              ],
+            },
           ],
         },
-        {
-          secret: rakenaCoNzTlsSecret,
-          hosts: ["vault.rakena.co.nz"],
-        },
-        {
-          secret: jacksonrakenaComTlsSecret,
-          hosts: ["go.jacksonrakena.com"],
-        },
-      ],
-      rules: [
-        {
-          host: "vault.rakena.com.au",
-          pathType: kplus.HttpIngressPathType.PREFIX,
-          backend: kplus.IngressBackend.fromService(galahad.vaultService),
-        },
-        {
-          host: "vault.rakena.co.nz",
-          pathType: kplus.HttpIngressPathType.PREFIX,
-          backend: kplus.IngressBackend.fromService(galahad.vaultService),
-        },
-        {
-          host: "api.gradekeeper.xyz",
-          pathType: kplus.HttpIngressPathType.PREFIX,
-          backend: kplus.IngressBackend.fromService(gks.service),
-        },
-        {
-          host: "go.jacksonrakena.com",
-          pathType: kplus.HttpIngressPathType.PREFIX,
-          backend: kplus.IngressBackend.fromService(blank.service),
-        },
-        {
-          host: "finance-api.rakena.com.au",
-          pathType: kplus.HttpIngressPathType.PREFIX,
-          backend: kplus.IngressBackend.fromService(mixer.service),
-        },
-        {
-          host: "finance.rakena.com.au",
-          pathType: kplus.HttpIngressPathType.PREFIX,
-          backend: kplus.IngressBackend.fromService(mixer.frontendService),
-        },
-      ],
-    });
+      });
+
+    [
+      {
+        name: "vault-route",
+        hostname: "vault.rakena.com.au",
+        service: vault.service,
+      },
+      {
+        name: "vault-co-nz-route",
+        hostname: "vault.rakena.co.nz",
+        service: vault.service,
+      },
+      {
+        name: "gradekeeper-route",
+        hostname: "api.gradekeeper.xyz",
+        service: gks.service,
+      },
+      {
+        name: "jacksonrakena-route",
+        hostname: "go.jacksonrakena.com",
+        service: blank.service,
+      },
+      {
+        name: "finance-api-route",
+        hostname: "finance-api.rakena.com.au",
+        service: mixer.service,
+      },
+      {
+        name: "finance-frontend-route",
+        hostname: "finance.rakena.com.au",
+        service: mixer.frontendService,
+      },
+    ].map(({ name, hostname, service }) =>
+      createRoute(name, hostname, service),
+    );
   }
 }

@@ -10,9 +10,8 @@ export class GradekeeperServer extends Chart {
     scope: Construct,
     id: string,
     configMap: kplus.IConfigMap,
-    postgresService: kplus.Service,
     registrySecret: kplus.DockerConfigSecret,
-    props?: ChartProps
+    props?: ChartProps,
   ) {
     super(scope, id, props);
 
@@ -29,7 +28,7 @@ export class GradekeeperServer extends Chart {
           envFrom: [new kplus.EnvFrom(configMap)],
           envVariables: {
             DATABASE_URL: kplus.EnvValue.fromValue(
-              `postgresql://gradekeeper:gradekeeper@${postgresService.name}/gradekeeper`
+              `postgresql://gradekeeper:gradekeeper@leode-rw/gradekeeper`,
             ),
           },
           liveness: kplus.Probe.fromHttpGet("/health", {
