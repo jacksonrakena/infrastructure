@@ -12,6 +12,7 @@ export class Mixer extends Chart {
     id: string,
     configMap: kplus.IConfigMap,
     registrySecret: kplus.DockerConfigSecret,
+    databaseSecret: kplus.ISecret,
     props?: ChartProps,
   ) {
     super(scope, id, props);
@@ -28,6 +29,14 @@ export class Mixer extends Chart {
             SPRING_DATASOURCE_URL: kplus.EnvValue.fromValue(
               `jdbc:postgresql://leode-rw/mixer`,
             ),
+            SPRING_DATASOURCE_USERNAME: kplus.EnvValue.fromSecretValue({
+              key: "username",
+              secret: databaseSecret,
+            }),
+            SPRING_DATASOURCE_PASSWORD: kplus.EnvValue.fromSecretValue({
+              key: "password",
+              secret: databaseSecret,
+            }),
             SPRING_PROFILES_ACTIVE: kplus.EnvValue.fromValue("prod"),
             SPRINGDOC_API_DOCS_ENABLED: kplus.EnvValue.fromValue("false"),
             SPRINGDOC_SWAGGER_UI_ENABLED: kplus.EnvValue.fromValue("false"),

@@ -17,6 +17,9 @@ import {
   HttpRoute,
   HttpRouteSpecRulesMatchesPathType,
 } from "../../../imports/gateway.networking.k8s.io";
+import * as fs from "fs";
+import { ClusterSpecManagedRoles } from "../../postgresql.cnpg.io";
+import { createPostgresRoleAndSecret } from "../../util/pg-utils";
 
 export class ProductionStack extends Chart {
   constructor(scope: Construct, id: string, props: ChartProps) {
@@ -34,10 +37,13 @@ export class ProductionStack extends Chart {
       props,
     );
 
+    const gkRole = createPostgresRoleAndSecret(this, "gradekeeper");
+    const mixerRole = createPostgresRoleAndSecret(this, "mixer");
     const leode = new LeodeCluster(
       this,
       "leode",
       storage.ociFreeStorageClass,
+      [gkRole, mixerRole].map((e) => e.role),
       props,
     );
 
@@ -47,6 +53,8 @@ export class ProductionStack extends Chart {
       this,
       "gk-server",
       credentials.gradekeeperConfigMap,
+      leode.services.readWrite,
+      gkRole.secret,
       credentials.githubRegistrySecret,
       props,
     );
@@ -56,6 +64,7 @@ export class ProductionStack extends Chart {
       "mixer",
       credentials.mixerBackendConfigMap,
       credentials.githubRegistrySecret,
+      mixerRole.secret,
       props,
     );
 

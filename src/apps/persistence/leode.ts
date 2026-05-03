@@ -1,15 +1,28 @@
 import { Construct } from "constructs";
 import { Chart, ChartProps } from "cdk8s";
-import { Cluster, Database } from "../../../imports/postgresql.cnpg.io";
+import {
+  Cluster,
+  ClusterSpecManagedRoles,
+  Database,
+} from "../../../imports/postgresql.cnpg.io";
 import { KubeStorageClass } from "../../k8s";
+import * as fs from "fs";
+import * as kplus from "cdk8s-plus-28";
 
 export class LeodeCluster extends Chart {
   public readonly cluster: Cluster;
   public readonly databases: Database[];
+  public readonly services: {
+    readAny: string;
+    readWrite: string;
+    readOnly: string;
+  };
+
   constructor(
     scope: Construct,
     id: string,
     storageClass: KubeStorageClass,
+    roles: ClusterSpecManagedRoles[],
     props?: ChartProps,
   ) {
     super(scope, id, props);
@@ -30,16 +43,7 @@ export class LeodeCluster extends Chart {
           size: "50Gi",
         },
         managed: {
-          roles: [
-            {
-              name: "gradekeeper",
-              login: true,
-            },
-            {
-              name: "mixer",
-              login: true,
-            },
-          ],
+          roles: roles,
         },
       },
     });
@@ -60,5 +64,11 @@ export class LeodeCluster extends Chart {
           },
         }),
     );
+
+    this.services = {
+      readAny: `${this.cluster.name}-r`,
+      readWrite: `${this.cluster.name}-rw`,
+      readOnly: `${this.cluster.name}-ro`,
+    };
   }
 }

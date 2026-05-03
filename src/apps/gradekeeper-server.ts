@@ -10,6 +10,8 @@ export class GradekeeperServer extends Chart {
     scope: Construct,
     id: string,
     configMap: kplus.IConfigMap,
+    databaseServiceReadWrite: string,
+    databaseSecret: kplus.ISecret,
     registrySecret: kplus.DockerConfigSecret,
     props?: ChartProps,
   ) {
@@ -27,9 +29,16 @@ export class GradekeeperServer extends Chart {
           ports: [{ number: 3000 }],
           envFrom: [new kplus.EnvFrom(configMap)],
           envVariables: {
-            DATABASE_URL: kplus.EnvValue.fromValue(
-              `postgresql://gradekeeper:gradekeeper@leode-rw/gradekeeper`,
-            ),
+            DATABASE_NAME: kplus.EnvValue.fromValue("gradekeeper"),
+            DATABASE_HOST: kplus.EnvValue.fromValue(databaseServiceReadWrite),
+            DATABASE_PASSWORD: kplus.EnvValue.fromSecretValue({
+              key: "password",
+              secret: databaseSecret,
+            }),
+            DATABASE_USERNAME: kplus.EnvValue.fromSecretValue({
+              key: "username",
+              secret: databaseSecret,
+            }),
           },
           liveness: kplus.Probe.fromHttpGet("/health", {
             initialDelaySeconds: Duration.seconds(10),
