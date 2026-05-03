@@ -67,45 +67,44 @@ ready for sending to the cluster.
 1. `ProductionRunner` creates the `prod` namespace, includes the upstream Gateway API, CloudNativePG, and Traefik Gateway RBAC manifests, and instantiates `ProductionStack`.
 2. `ProductionStack` (`src/envs/prod/production-stack.ts`):
     1. Loads credentials from a local directory as Kubernetes secrets and configmap resources
+       - **Possible improvement** - use Oracle secret management instead of raw Kubernetes secrets
     2. Creates the global data volume (`ProductionBlockStorage`)
+       - This was used by several apps in the past, but is currently only used by Vaultwarden. It is massively overprovisioned (50GiB) due to the minimum volume size set by Oracle Cloud
     3. Provisions the `Leode` CloudNativePG Postgres cluster, with managed roles and per-app databases
+       - This single cluster is used by all apps that require a Postgres database
+       - This cluster is only configured `instances: 1`, as each instance needs a dedicated volume, and the Oracle free tier only allows 200 GiB (global data volume 50 GiB + 2 boot volumes for Kube nodes @ 50 GiB each + 1 Leode instance @ 50 GiB = 200 GiB total).
+         - During Kubernetes cluster maintenance, I usually scale up to 2 instances (primary + replica) for zero-downtime failover, then scale back down to 1 (primary only) after maintenance is complete.
     4. Provisions all apps, linking them to credentials, the Postgres cluster, and the data volume as necessary
-        1. Vault (Vaultwarden, backed by Leode)
-        2. Gradekeeper Server (backed by Leode)
-        3. Mixer (API and frontend, backed by Leode)
-        4. Blank
+        1. Vault [dani-garcia/vaultwarden](https://github.com/dani-garcia/vaultwarden)
+        2. Gradekeeper Server (API) [jacksonrakena/gradekeeper](https://github.com/jacksonrakena/gradekeeper)
+        3. Mixer (API and frontend) [jacksonrakena/mixer](https://github.com/jacksonrakena/mixer)
+        4. Blank [jacksonrakena/blank](https://github.com/jacksonrakena/blank)
     5. Configures Traefik resources (`src/traefik/traefik-stack.ts`):
         1. Creates service accounts, cluster roles, and bindings.
         2. Creates a Traefik deployment configured solely to run on port 443, with the Kubernetes Gateway provider enabled.
-        3. Creates a `LoadBalancer` service annotated for an Oracle Cloud Network Load Balancer, and exposes port 443 to
-           the
-           Traefik deployment
-            - Given that Traefik natively can perform the same tasks of the regular Load Balancer (TLS termination,
-              virtual
-              hosts, native load-balancing), there is no reason to use the regular (HTTP) Load Balancer over the Network
-              Load Balancer.
-            - Using the Network Load Balancer also allows us to receive and handle non-HTTP connections over our
-              ingress, in
-              the future.
-        4. Registers a `GatewayClass` for the `traefik.io/gateway-controller`.
+           - This operates in controller mode providing the Gateway API controller
+           - Also creates a `LoadBalancer` service annotated for an Oracle Cloud Network Load Balancer (NLB)
+             - Traefik + Gateway API can do all the functions of a normal Oracle Load Balancer, so there is no need to use one. NLB is included in the free tier.
+        3. Registers a `GatewayClass` for the `traefik.io/gateway-controller`.
     6. Creates a Gateway API `Gateway` terminating TLS for `rakena.co.nz`, `rakena.com.au`, and `jacksonrakena.com`, and an `HTTPRoute` per hostname pointing at the appropriate backing service.
+        - **Improvement** - automate the Cloudflare SSL cert retrieval + improve code structure around routing (move the routes into app ownership)
 
 ### Secrets (`/secrets`)
 
 This directory contains production-level secrets that the stack depends on.  
 These secrets are excluded for security reasons.
 
-| Name                                                                                  | Type                             | Expected value                                                                                                                                                                                                                          |
-| ------------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vault-secret` (vaultwarden.env)                                                      | Secret/Opaque                    | Environment variables for the Vaultwarden deployment, loaded as `key=value` lines.                                                                                                                                                      |
-| `gh-container-registry` (docker-registry-config.json)                                 | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry.                                                                                                                                                                                              |
-| `gradekeeper-config` (gradekeeper-server.env)                                         | ConfigMap                        | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs).                                                                             |
-| `mixer-backend-config` (mixer.backend.env)                                            | ConfigMap                        | Environment variables for the Mixer API deployment, loaded as `key=value` lines.                                                                                                                                                        |
-| `blank-config` (go_targets.kdl)                                                       | ConfigMap                        | A single `targets.kdl` file containing the redirect target list for the Blank deployment.                                                                                                                                               |
-| `pg-users/<app>.properties`                                                           | Secret/`basic-auth`              | Per-app `username` and `password` properties files (`gradekeeper`, `mixer`) used to materialise CloudNativePG managed roles and the secrets each app uses to connect to Leode.                                                          |
-| `rakena-co-nz-cert` (cert-rakena.co.nz/tls.key, cert-rakena.co.nz/tls.crt)            | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.co.nz`.                                                                                                                                                                                    |
-| `rakena-com-au-cert` (cert-rakena.com.au/tls.key, cert-rakena.com.au/tls.crt)         | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.com.au`.                                                                                                                                                                                   |
-| `jacksonrakena-com-cert` (cert-jacksonrakena.com/tls.key, cert-jacksonrakena.com/tls.crt) | `kubernetes.io/tls`          | Contains the certificate and key for `jacksonrakena.com`.                                                                                                                                                                               |
+| Name                                                                                      | Type                             | Expected value                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vault-secret` (vaultwarden.env)                                                          | Secret/Opaque                    | Environment variables for the Vaultwarden deployment, loaded as `key=value` lines.                                                                                             |
+| `gh-container-registry` (docker-registry-config.json)                                     | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry.                                                                                                                                     |
+| `gradekeeper-config` (gradekeeper-server.env)                                             | ConfigMap                        | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs).                    |
+| `mixer-backend-config` (mixer.backend.env)                                                | ConfigMap                        | Environment variables for the Mixer API deployment, loaded as `key=value` lines.                                                                                               |
+| `blank-config` (go_targets.kdl)                                                           | ConfigMap                        | A single `targets.kdl` file containing the redirect target list for the Blank deployment.                                                                                      |
+| `pg-users/<app>.properties`                                                               | Secret/`basic-auth`              | Per-app `username` and `password` properties files (`gradekeeper`, `mixer`) used to materialise CloudNativePG managed roles and the secrets each app uses to connect to Leode. |
+| `rakena-co-nz-cert` (cert-rakena.co.nz/tls.key, cert-rakena.co.nz/tls.crt)                | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.co.nz`.                                                                                                                           |
+| `rakena-com-au-cert` (cert-rakena.com.au/tls.key, cert-rakena.com.au/tls.crt)             | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.com.au`.                                                                                                                          |
+| `jacksonrakena-com-cert` (cert-jacksonrakena.com/tls.key, cert-jacksonrakena.com/tls.crt) | `kubernetes.io/tls`              | Contains the certificate and key for `jacksonrakena.com`.                                                                                                                      |
 
 ## Recipes
 
