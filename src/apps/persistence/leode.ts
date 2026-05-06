@@ -45,6 +45,9 @@ export class LeodeCluster extends Chart {
         managed: {
           roles: roles,
         },
+        monitoring: {
+          enablePodMonitor: true,
+        },
       },
     });
 

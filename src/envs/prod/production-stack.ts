@@ -17,8 +17,6 @@ import {
   HttpRoute,
   HttpRouteSpecRulesMatchesPathType,
 } from "../../../imports/gateway.networking.k8s.io";
-import * as fs from "fs";
-import { ClusterSpecManagedRoles } from "../../postgresql.cnpg.io";
 import { createPostgresRoleAndSecret } from "../../util/pg-utils";
 
 export class ProductionStack extends Chart {
@@ -105,16 +103,48 @@ export class ProductionStack extends Chart {
         },
         listeners: [
           {
-            name: "https",
+            name: "https-rakenaconz",
+            protocol: "HTTPS",
+            port: 443,
+            hostname: "*.rakena.co.nz",
+            tls: {
+              mode: GatewaySpecListenersTlsMode.TERMINATE,
+              certificateRefs: [rakenaCoNzTlsSecret].map((secret) => ({
+                name: secret.name,
+                namespace: this.namespace,
+              })),
+            },
+            allowedRoutes: {
+              namespaces: {
+                from: GatewaySpecListenersAllowedRoutesNamespacesFrom.SAME,
+              },
+            },
+          },
+          {
+            name: "https-jacksonrakenacom",
+            protocol: "HTTPS",
+            port: 443,
+            hostname: "*.jacksonrakena.com",
+            tls: {
+              mode: GatewaySpecListenersTlsMode.TERMINATE,
+              certificateRefs: [jacksonrakenaComTlsSecret].map((secret) => ({
+                name: secret.name,
+                namespace: this.namespace,
+              })),
+            },
+            allowedRoutes: {
+              namespaces: {
+                from: GatewaySpecListenersAllowedRoutesNamespacesFrom.SAME,
+              },
+            },
+          },
+          {
+            name: "https-rakenacomau",
             protocol: "HTTPS",
             port: 443,
             tls: {
               mode: GatewaySpecListenersTlsMode.TERMINATE,
-              certificateRefs: [
-                rakenaComAuTlsSecret,
-                rakenaCoNzTlsSecret,
-                jacksonrakenaComTlsSecret,
-              ].map((secret) => ({
+              certificateRefs: [rakenaComAuTlsSecret].map((secret) => ({
                 name: secret.name,
                 namespace: this.namespace,
               })),
@@ -145,7 +175,6 @@ export class ProductionStack extends Chart {
               name: "traefik-gateway",
             },
           ],
-
           hostnames: [hostname],
           rules: [
             {
