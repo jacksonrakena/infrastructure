@@ -1,0 +1,19 @@
+src/apps/persistence/leode.ts
+  h_e41bc4ae95b990 48-50
+src/envs/prod/production-stack.ts
+  h_e41bc4ae95b990 106,109,112-142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "301c19997bb38a5c13835e25c1dc3f83d4c4fea2",
+  "prompts": {},
+  "humans": {
+    "h_6a707fe7ab094c": {
+      "author": "jacksonrakena <jackson@rakena.co.nz>"
+    },
+    "h_e41bc4ae95b990": {
+      "author": "jacksonrakena"
+    }
+  }
+}
