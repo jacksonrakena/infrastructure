@@ -1,0 +1,61 @@
+src/apps/mixer.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+src/envs/prod/production-stack.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+src/util/container-utils.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 1
+.gitignore
+  h_6a707fe7ab094c 8
+cdk8s.yaml
+  s_729e78153a23ae::t_3a6af680f7beda 2
+src/apps/gradekeeper-server.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+src/envs/prod/production-runner.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+  h_6a707fe7ab094c 19
+src/envs/prod/production-block-storage.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+src/traefik/traefik-stack.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+  h_6a707fe7ab094c 32,89
+src/util/pg-utils.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 2
+src/util/secret-utils.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+mise.toml
+  s_729e78153a23ae::t_32a36e1f085d73 1-2
+package.json
+  s_729e78153a23ae::t_39f1acd84b0d41 12-13,15-16,19
+  s_729e78153a23ae::t_d68cf3830c941c 14
+  s_729e78153a23ae::t_a6c3ea57c72da9 20-21
+src/apps/vault.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+src/apps/blank.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+src/envs/prod/production-credentials.ts
+  s_729e78153a23ae::t_44c8becee3ffc0 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ca5611f7852144c223b9ac3033791374e0732a18",
+  "prompts": {},
+  "humans": {
+    "h_6a707fe7ab094c": {
+      "author": "jacksonrakena <jackson@rakena.co.nz>"
+    },
+    "h_e41bc4ae95b990": {
+      "author": "jacksonrakena"
+    }
+  },
+  "sessions": {
+    "s_729e78153a23ae": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "56ca5a29-bb7a-40f4-ae7c-8fcb4f85f94a",
+        "model": "claude-opus-4.7"
+      },
+      "human_author": "jacksonrakena <jackson@rakena.co.nz>"
+    }
+  }
+}
