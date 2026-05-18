@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { Chart, ChartProps } from "cdk8s";
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 import {
   KubeClusterRoleBinding,
   KubeDeployment,
@@ -8,15 +8,6 @@ import {
   IntOrString,
 } from "../../imports/k8s";
 import { GatewayClass } from "../../imports/gateway.networking.k8s.io";
-
-function makeCustomApiResources(
-  apiGroup: string,
-  resourceTypes: string[],
-): kplus.IApiEndpoint[] {
-  return resourceTypes.map((rt) =>
-    kplus.ApiResource.custom({ apiGroup, resourceType: rt }),
-  );
-}
 
 export class TraefikStack extends Chart {
   constructor(scope: Construct, id: string, props?: ChartProps) {
@@ -38,6 +29,7 @@ export class TraefikStack extends Chart {
             kplus.ApiResource.NODES,
             kplus.ApiResource.NAMESPACES,
             kplus.ApiResource.ENDPOINT_SLICES,
+            kplus.ApiResource.CONFIG_MAPS,
             kplus.ApiResource.custom({
               apiGroup: "gateway.networking.k8s.io",
               resourceType: "*",
@@ -94,7 +86,7 @@ export class TraefikStack extends Chart {
             containers: [
               {
                 name: "traefik",
-                image: "docker.io/library/traefik:v3.4",
+                image: "docker.io/library/traefik:v3.7.1",
                 args: [
                   "--entrypoints.websecure.address=:443",
                   "--entrypoints.websecure.http.tls=true",

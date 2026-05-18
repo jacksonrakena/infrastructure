@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 
 export function loadTlsSecretFromFolder(
   folderPath: string

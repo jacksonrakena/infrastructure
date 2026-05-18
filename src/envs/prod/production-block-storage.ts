@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { ApiObjectMetadata, Chart, ChartProps, Size } from "cdk8s";
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 import { KubeStorageClass } from "../../../imports/k8s";
 
 export class ProductionBlockStorage extends Chart {

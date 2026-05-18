@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 import { Construct } from "constructs";
 import { ClusterSpecManagedRoles } from "../../imports/postgresql.cnpg.io";
 // Creates a Postgres role and corresponding Kubernetes secret from a properties file

@@ -1,5 +1,5 @@
 language: typescript
-app: npx ts-node src/main.ts
+app: npx tsx src/main.ts
 imports:
   - k8s
   - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml

@@ -1,4 +1,4 @@
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 import { Size } from "cdk8s";
 
 export function applyCommonConfiguration(

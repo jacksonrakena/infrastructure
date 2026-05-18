@@ -6,8 +6,6 @@ import {
   Database,
 } from "../../../imports/postgresql.cnpg.io";
 import { KubeStorageClass } from "../../k8s";
-import * as fs from "fs";
-import * as kplus from "cdk8s-plus-28";
 
 export class LeodeCluster extends Chart {
   public readonly cluster: Cluster;

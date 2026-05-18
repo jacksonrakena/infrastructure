@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { Chart, ChartProps } from "cdk8s";
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 import * as fs from "fs";
 import { applyCommonConfiguration } from "../util/container-utils";
 

@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { Chart, ChartProps, Include } from "cdk8s";
-import * as kplus from "cdk8s-plus-28";
+import * as kplus from "cdk8s-plus-34";
 import { ProductionStack } from "./production-stack";
 
 export class ProductionRunner extends Chart {
@@ -16,7 +16,7 @@ export class ProductionRunner extends Chart {
     });
 
     new Include(this, "traefik-rbac", {
-      url: "https://raw.githubusercontent.com/traefik/traefik/v3.6.15/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml",
+      url: "https://raw.githubusercontent.com/traefik/traefik/v3.7.1/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml",
     });
 
     const namespace = new kplus.Namespace(this, "prod-namespace", {
