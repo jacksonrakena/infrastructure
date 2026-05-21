@@ -1,0 +1,19 @@
+src/envs/prod/production-stack.ts
+  h_6a707fe7ab094c 43
+src/envs/prod/production-block-storage.ts
+  h_6a707fe7ab094c 9,26-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "a30f2ef0c41616558f0b991d00d61eca833ffdd8",
+  "prompts": {},
+  "humans": {
+    "h_6a707fe7ab094c": {
+      "author": "jacksonrakena <jackson@rakena.co.nz>"
+    },
+    "h_e41bc4ae95b990": {
+      "author": "jacksonrakena"
+    }
+  }
+}
