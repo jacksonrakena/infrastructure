@@ -40,7 +40,7 @@ export class ProductionStack extends Chart {
     const leode = new LeodeCluster(
       this,
       "leode",
-      storage.ociFreeStorageClass,
+      storage.ociFreeTransientStorageClass,
       [gkRole, mixerRole].map((e) => e.role),
       props,
     );

@@ -6,6 +6,7 @@ import { KubeStorageClass } from "../../../imports/k8s";
 export class ProductionBlockStorage extends Chart {
   public readonly volumeClaim: kplus.PersistentVolumeClaim;
   public readonly ociFreeStorageClass: KubeStorageClass;
+  public readonly ociFreeTransientStorageClass: KubeStorageClass;
   constructor(scope: Construct, id: string, props?: ChartProps) {
     super(scope, id, props);
 
@@ -17,6 +18,19 @@ export class ProductionBlockStorage extends Chart {
         provisioner: "blockvolume.csi.oraclecloud.com",
         parameters: { vpusPerGB: "0" },
         reclaimPolicy: "Retain",
+        volumeBindingMode: "WaitForFirstConsumer",
+        allowVolumeExpansion: true,
+      },
+    );
+
+    this.ociFreeTransientStorageClass = new KubeStorageClass(
+      this,
+      "oci-free-transient-storage-class",
+      {
+        metadata: { name: "oci-free-transient" },
+        provisioner: "blockvolume.csi.oraclecloud.com",
+        parameters: { vpusPerGB: "0" },
+        reclaimPolicy: "Delete",
         volumeBindingMode: "WaitForFirstConsumer",
         allowVolumeExpansion: true,
       },
