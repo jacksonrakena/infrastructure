@@ -1,0 +1,19 @@
+src/apps/mixer.ts
+  h_6a707fe7ab094c 69
+src/apps/blank.ts
+  h_6a707fe7ab094c 14,28,32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "f228b80a1592ce8e95bdd21c53c24368314ad3b8",
+  "prompts": {},
+  "humans": {
+    "h_6a707fe7ab094c": {
+      "author": "jacksonrakena <jackson@rakena.co.nz>"
+    },
+    "h_e41bc4ae95b990": {
+      "author": "jacksonrakena"
+    }
+  }
+}
