@@ -66,7 +66,7 @@ export class Mixer extends Chart {
     });
 
     const frontendDeployment = new kplus.Deployment(this, "frontend", {
-      replicas: 3,
+      replicas: 1,
       containers: [
         applyCommonConfiguration({
           name: "mixer-frontend",

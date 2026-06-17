@@ -11,7 +11,7 @@ export class Blank extends Chart {
     scope: Construct,
     id: string,
     registrySecret: kplus.DockerConfigSecret,
-    props?: ChartProps
+    props?: ChartProps,
   ) {
     super(scope, id, props);
 
@@ -25,11 +25,11 @@ export class Blank extends Chart {
     const volume = kplus.Volume.fromConfigMap(
       this,
       "blank-targets-mount",
-      configMap
+      configMap,
     );
 
     const deployment = new kplus.Deployment(this, "deployment", {
-      replicas: 3,
+      replicas: 1,
       strategy: kplus.DeploymentStrategy.rollingUpdate({
         maxUnavailable: kplus.PercentOrAbsolute.absolute(1),
       }),
