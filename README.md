@@ -128,7 +128,7 @@ Use `cdk8s` and `kubectl` to automatically bring up all resources in order:
 
 ```
 npm run build
-kubectl apply -f dist
+kubectl apply -f dist --server-side
 ```
 
 #### Force manifest synchronisation
