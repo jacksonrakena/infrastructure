@@ -24,7 +24,7 @@ export const createPostgresRoleAndSecret = (scope: Construct, name: string) => {
     type: "kubernetes.io/basic-auth",
     metadata: {
       labels: {
-        "cpng.io/reload": "true",
+        "cnpg.io/reload": "true",
       },
     },
     stringData: properties,
