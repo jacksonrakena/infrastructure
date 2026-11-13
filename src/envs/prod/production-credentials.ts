@@ -21,6 +21,7 @@ export class ProductionCredentials extends Chart {
   public readonly githubRegistrySecret: kplus.DockerConfigSecret;
   public readonly gradekeeperConfigMap: kplus.IConfigMap;
   public readonly mixerBackendConfigMap: kplus.IConfigMap;
+  public readonly homarrSecret: kplus.Secret;
 
   constructor(scope: Construct, id: string, props: ChartProps) {
     super(scope, id, props);
@@ -59,5 +60,10 @@ export class ProductionCredentials extends Chart {
         data: createStringDataFromFile("secrets/mixer.backend.env"),
       },
     );
+
+    this.homarrSecret = new kplus.Secret(this, "homarr-secret", {
+      stringData: createStringDataFromFile("secrets/homarr.env"),
+      immutable: false,
+    });
   }
 }

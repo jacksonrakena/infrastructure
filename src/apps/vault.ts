@@ -5,6 +5,7 @@ import { applyCommonConfiguration } from "../util/container-utils";
 
 export class Vault extends Chart {
   public readonly service: kplus.Service;
+  public readonly deployment: kplus.Deployment;
 
   constructor(
     scope: Construct,
@@ -43,6 +44,7 @@ export class Vault extends Chart {
       ],
     });
 
+    this.deployment = deployment;
     this.service = deployment.exposeViaService({
       ports: [{ port: 80, targetPort: 80 }],
     });

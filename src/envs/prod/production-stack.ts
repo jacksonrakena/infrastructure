@@ -18,6 +18,7 @@ import {
   HttpRouteSpecRulesMatchesPathType,
 } from "../../../imports/gateway.networking.k8s.io";
 import { createPostgresRoleAndSecret } from "../../util/pg-utils";
+import { Homarr } from "../../apps/homarr";
 
 export class ProductionStack extends Chart {
   constructor(scope: Construct, id: string, props: ChartProps) {
@@ -32,6 +33,15 @@ export class ProductionStack extends Chart {
       "vault",
       credentials.vaultwardenSecret,
       storage.volumeClaim,
+      props,
+    );
+
+    const homarr = new Homarr(
+      this,
+      "homarr",
+      credentials.homarrSecret,
+      storage.volumeClaim,
+      vault.deployment,
       props,
     );
 
@@ -227,6 +237,11 @@ export class ProductionStack extends Chart {
         name: "finance-frontend-route",
         hostname: "finance.rakena.com.au",
         service: mixer.frontendService,
+      },
+      {
+        name: "home-route",
+        hostname: "home.rakena.com.au",
+        service: homarr.service,
       },
     ].map(({ name, hostname, service }) =>
       createRoute(name, hostname, service),

@@ -14,12 +14,13 @@ flowchart LR
         mx["Mixer API<br>finance-api.rakena.com.au"]
         mxf["Mixer Frontend<br>finance.rakena.com.au"]
         bl["Blank<br>go.jacksonrakena.com"]
+        hm["Homarr<br>home.rakena.com.au"]
   end
     client(["Internet"]) -..-> cf["Cloudflare"]
     gk_frontend["Gradekeeper Client<br>app.gradekeeper.xyz"] --> vsec
     cf -. via direct ..-> vsec
     vsec --> ingress
-    ingress --> gk & vw & mx & mxf & bl
+    ingress --> gk & vw & mx & mxf & bl & hm
     vw --> pg
     gk --> pg
     mx --> pg
@@ -31,6 +32,7 @@ flowchart LR
      mx:::k8s
      mxf:::k8s
      bl:::k8s
+     hm:::k8s
      client:::plain
      cf:::cloudflare
      cluster:::cluster
@@ -69,7 +71,7 @@ ready for sending to the cluster.
     1. Loads credentials from a local directory as Kubernetes secrets and configmap resources
        - **Possible improvement** - use Oracle secret management instead of raw Kubernetes secrets
     2. Creates the global data volume (`ProductionBlockStorage`)
-       - This was used by several apps in the past, but is currently only used by Vaultwarden. It is massively overprovisioned (50GiB) due to the minimum volume size set by Oracle Cloud
+       - This was used by several apps in the past, but is currently only used by Vaultwarden and Homarr. It is massively overprovisioned (50GiB) due to the minimum volume size set by Oracle Cloud
     3. Provisions the `Leode` CloudNativePG Postgres cluster, with managed roles and per-app databases
        - This single cluster is used by all apps that require a Postgres database
        - This cluster is only configured `instances: 1`, as each instance needs a dedicated volume, and the Oracle free tier only allows 200 GiB (global data volume 50 GiB + 2 boot volumes for Kube nodes @ 50 GiB each + 1 Leode instance @ 50 GiB = 200 GiB total).
@@ -79,6 +81,7 @@ ready for sending to the cluster.
         2. Gradekeeper Server (API) [jacksonrakena/gradekeeper](https://github.com/jacksonrakena/gradekeeper)
         3. Mixer (API and frontend) [jacksonrakena/mixer](https://github.com/jacksonrakena/mixer)
         4. Blank [jacksonrakena/blank](https://github.com/jacksonrakena/blank)
+        5. Homarr [homarr-labs/homarr](https://github.com/homarr-labs/homarr)
     5. Configures Traefik resources (`src/traefik/traefik-stack.ts`):
         1. Creates service accounts, cluster roles, and bindings.
         2. Creates a Traefik deployment configured solely to run on port 443, with the Kubernetes Gateway provider enabled.
@@ -101,6 +104,7 @@ These secrets are excluded for security reasons.
 | `gradekeeper-config` (gradekeeper-server.env)                                             | ConfigMap                        | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs).                    |
 | `mixer-backend-config` (mixer.backend.env)                                                | ConfigMap                        | Environment variables for the Mixer API deployment, loaded as `key=value` lines.                                                                                               |
 | `blank-config` (go_targets.kdl)                                                           | ConfigMap                        | A single `targets.kdl` file containing the redirect target list for the Blank deployment.                                                                                      |
+| `homarr-secret` (homarr.env) | Secret/Opaque | Environment variables for the Homarr deployment, loaded as `key=value` lines. Must contain `SECRET_ENCRYPTION_KEY`. |
 | `pg-users/<app>.properties`                                                               | Secret/`basic-auth`              | Per-app `username` and `password` properties files (`gradekeeper`, `mixer`) used to materialise CloudNativePG managed roles and the secrets each app uses to connect to Leode. |
 | `rakena-co-nz-cert` (cert-rakena.co.nz/tls.key, cert-rakena.co.nz/tls.crt)                | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.co.nz`.                                                                                                                           |
 | `rakena-com-au-cert` (cert-rakena.com.au/tls.key, cert-rakena.com.au/tls.crt)             | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.com.au`.                                                                                                                          |
