@@ -31,6 +31,7 @@ export class TraefikStack extends Chart {
             kplus.ApiResource.ENDPOINT_SLICES,
             kplus.ApiResource.CONFIG_MAPS,
             kplus.ApiResource.custom({
+
               apiGroup: "gateway.networking.k8s.io",
               resourceType: "*",
             }),
@@ -86,7 +87,7 @@ export class TraefikStack extends Chart {
             containers: [
               {
                 name: "traefik",
-                image: "docker.io/library/traefik:v3.7.1",
+                image: "docker.io/library/traefik:v3.7.13",
                 args: [
                   "--entrypoints.websecure.address=:443",
                   "--entrypoints.websecure.http.tls=true",
