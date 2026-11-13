@@ -47,14 +47,19 @@ export class Authentik extends Chart {
           ports: [{ number: 9000, name: "http" }],
           envFrom,
           envVariables,
+          // First boot (and upgrades) run migrations, during which the health
+          // endpoints return 5xx. Allow up to 10 minutes before liveness applies.
+          startup: kplus.Probe.fromHttpGet("/-/health/live/", {
+            port: 9000,
+            periodSeconds: Duration.seconds(10),
+            failureThreshold: 60,
+          }),
           liveness: kplus.Probe.fromHttpGet("/-/health/live/", {
             port: 9000,
-            initialDelaySeconds: Duration.seconds(30),
             periodSeconds: Duration.seconds(10),
           }),
           readiness: kplus.Probe.fromHttpGet("/-/health/ready/", {
             port: 9000,
-            initialDelaySeconds: Duration.seconds(30),
             periodSeconds: Duration.seconds(10),
           }),
         }),
