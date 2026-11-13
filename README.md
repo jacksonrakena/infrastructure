@@ -65,17 +65,23 @@ do, you'll need to replace the secrets with your own.
 
 ## Kubernetes overview
 
-This is  TypeScript project that creates a complete set of Kubernetes manifests in the
-`/dist` folder,
-ready for sending to the cluster.
+This is a TypeScript project that creates a complete set of Kubernetes manifests in the
+`/dist` folder, ready for sending to the cluster. The output is split into three layers
+(`src/main.ts`), each in its own folder, so that only the layer that is safe to prune is pruned:
 
-1. `ProductionRunner` creates the `prod` namespace, includes the upstream Gateway API, CloudNativePG, and Traefik Gateway RBAC manifests, and instantiates `ProductionStack`.
+| Layer | Folder | Contents | Pruned? |
+| ----- | ------ | -------- | ------- |
+| Platform | `dist/platform` | Upstream CloudNativePG, Gateway API, Traefik Gateway RBAC and Tailscale operator manifests, and the `prod` namespace (`PlatformLayer`) | Never: removing a CRD deletes every resource of that type |
+| Data | `dist/data` | Storage classes, the global data volume claim, and the `Leode` Postgres cluster (`DataLayer`) | Never: deleting these destroys data |
+| Prod | `dist/prod` | Everything in `ProductionStack`: credentials, apps, Leode roles and databases, Traefik, routing | Yes, through the `jci-prod` ApplySet |
+
+1. `PlatformLayer` (`src/envs/prod/layers.ts`) creates the `prod` namespace and includes the upstream manifests.
 2. `ProductionStack` (`src/envs/prod/production-stack.ts`):
     1. Loads credentials from a local directory as Kubernetes secrets and configmap resources
        - **Possible improvement** - use Oracle secret management instead of raw Kubernetes secrets
-    2. Creates the global data volume (`ProductionBlockStorage`)
+    2. Uses the global data volume (`ProductionBlockStorage`, created in the data layer)
        - This was used by several apps in the past, but is currently only used by Vaultwarden and Homarr. It is massively overprovisioned (50GiB) due to the minimum volume size set by Oracle Cloud
-    3. Provisions the `Leode` CloudNativePG Postgres cluster, with managed roles and per-app databases
+    3. Defines the managed roles and per-app databases for the `Leode` CloudNativePG Postgres cluster (the cluster itself is created in the data layer)
        - This single cluster is used by all apps that require a Postgres database
        - This cluster is only configured `instances: 1`, as each instance needs a dedicated volume, and the Oracle free tier only allows 200 GiB (global data volume 50 GiB + 2 boot volumes for Kube nodes @ 50 GiB each + 1 Leode instance @ 50 GiB = 200 GiB total).
          - During Kubernetes cluster maintenance, I usually scale up to 2 instances (primary + replica) for zero-downtime failover, then scale back down to 1 (primary only) after maintenance is complete.
@@ -122,24 +128,31 @@ These secrets are excluded for security reasons.
 You'll need to edit `src/traefik/traefik-stack.ts` to have your Oracle Network Load Balancer
 settings.
 
+#### Preview changes
+
+Builds the manifest and shows what would change on the cluster, including any prod objects that would be pruned. Changes nothing:
+
+```
+make diff
+```
+
 #### Bring everything up
 
-Use `cdk8s` and `kubectl` to automatically bring up all resources in order:
+Builds the manifest and applies the platform, data and prod layers in order with server-side apply:
 
 ```
-npm run build
-kubectl apply -f dist --server-side
+make apply
 ```
 
-#### Force manifest synchronisation
+The prod layer is applied as the `jci-prod` [ApplySet](https://kubernetes.io/blog/2023/05/09/introducing-kubectl-applyset-pruning/) (`KUBECTL_APPLYSET=true`, alpha in kubectl), so prod objects removed from the code are deleted from the cluster. Pruning is guarded by `scripts/kube-apply.sh`:
 
-###### (warning, this is dangerous)
+- Only objects a previous apply labelled as members of `jci-prod` can be pruned. Anything created outside this repository is never touched.
+- If anything would be pruned, the apply stops before changing anything and lists it. Re-run with `CONFIRM_PRUNE=1 make apply` after reviewing the list.
+- Pruning a protected kind (persistent volumes and claims, storage classes, CRDs, namespaces, CNPG clusters) is always refused. Delete those by hand if that is really intended.
 
-To bring up all resources and delete **any** resource in the `prod` namespace that is not in the manifest, use:
+Platform and data objects are never pruned. When removing something from those layers, delete it from the cluster by hand as well.
 
-```
-kubectl apply -f dist --prune --all
-```
+Renaming a construct changes the generated resource name, so the old object is pruned and a new one created. That is harmless for deployments, but recreates secrets and services under new names.
 
 ## Copyright
 

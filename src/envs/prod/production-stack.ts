@@ -9,7 +9,11 @@ import { GradekeeperServer } from "../../apps/gradekeeper-server";
 import { Blank } from "../../apps/blank";
 import { loadTlsSecretFromFolder } from "../../util/secret-utils";
 import { Mixer } from "../../apps/mixer";
-import { LeodeCluster } from "../../apps/persistence/leode";
+import {
+  LeodeDatabases,
+  leodeServices,
+} from "../../apps/persistence/leode";
+import { ClusterSpecManagedRoles } from "../../../imports/postgresql.cnpg.io";
 import {
   Gateway,
   GatewaySpecListenersAllowedRoutesNamespacesFrom,
@@ -21,13 +25,21 @@ import { createPostgresRoleAndSecret } from "../../util/pg-utils";
 import { Homarr } from "../../apps/homarr";
 import { Authentik } from "../../apps/authentik";
 
+// Everything in the prod layer: apps, credentials, routing. Applied as the
+// "jci-prod" ApplySet, so anything removed from here is pruned on apply.
 export class ProductionStack extends Chart {
-  constructor(scope: Construct, id: string, props: ChartProps) {
+  // Managed roles for the Leode cluster, which lives in the data layer.
+  public readonly postgresRoles: ClusterSpecManagedRoles[];
+
+  constructor(
+    scope: Construct,
+    id: string,
+    storage: ProductionBlockStorage,
+    props: ChartProps,
+  ) {
     super(scope, id, props);
 
     const credentials = new ProductionCredentials(this, "credentials", props);
-
-    const storage = new ProductionBlockStorage(this, id, props);
 
     const vault = new Vault(
       this,
@@ -49,11 +61,10 @@ export class ProductionStack extends Chart {
     const gkRole = createPostgresRoleAndSecret(this, "gradekeeper");
     const mixerRole = createPostgresRoleAndSecret(this, "mixer");
     const authentikRole = createPostgresRoleAndSecret(this, "authentik");
-    const leode = new LeodeCluster(
+    this.postgresRoles = [gkRole, mixerRole, authentikRole].map((e) => e.role);
+    new LeodeDatabases(
       this,
       "leode",
-      storage.ociFreeTransientStorageClass,
-      [gkRole, mixerRole, authentikRole].map((e) => e.role),
       ["gradekeeper", "mixer", "authentik"],
       props,
     );
@@ -64,7 +75,7 @@ export class ProductionStack extends Chart {
       this,
       "gk-server",
       credentials.gradekeeperConfigMap,
-      leode.services.readWrite,
+      leodeServices.readWrite,
       gkRole.secret,
       credentials.githubRegistrySecret,
       props,
@@ -83,7 +94,7 @@ export class ProductionStack extends Chart {
       this,
       "authentik",
       credentials.authentikSecret,
-      leode.services.readWrite,
+      leodeServices.readWrite,
       authentikRole.secret,
       props,
     );

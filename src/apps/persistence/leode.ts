@@ -7,28 +7,32 @@ import {
 } from "../../../imports/postgresql.cnpg.io";
 import { KubeStorageClass } from "../../k8s";
 
+export const LEODE_CLUSTER_NAME = "leode";
+
+// Services CloudNativePG creates for the cluster.
+export const leodeServices = {
+  readAny: `${LEODE_CLUSTER_NAME}-r`,
+  readWrite: `${LEODE_CLUSTER_NAME}-rw`,
+  readOnly: `${LEODE_CLUSTER_NAME}-ro`,
+};
+
+// The Postgres cluster itself. Lives in the data layer, which is never pruned:
+// deleting this resource deletes the instance volume (reclaimPolicy: Delete).
 export class LeodeCluster extends Chart {
   public readonly cluster: Cluster;
-  public readonly databases: Database[];
-  public readonly services: {
-    readAny: string;
-    readWrite: string;
-    readOnly: string;
-  };
 
   constructor(
     scope: Construct,
     id: string,
     storageClass: KubeStorageClass,
     roles: ClusterSpecManagedRoles[],
-    databaseNames: string[],
     props?: ChartProps,
   ) {
     super(scope, id, props);
 
     this.cluster = new Cluster(this, "leode-cluster", {
       metadata: {
-        name: "leode",
+        name: LEODE_CLUSTER_NAME,
         namespace: this.namespace,
       },
       spec: {
@@ -49,6 +53,22 @@ export class LeodeCluster extends Chart {
         },
       },
     });
+  }
+}
+
+// Per-app databases on Leode. Lives in the prunable prod layer: CNPG's default
+// databaseReclaimPolicy is "retain", so removing one here drops the resource
+// but keeps the database and its data in Postgres.
+export class LeodeDatabases extends Chart {
+  public readonly databases: Database[];
+
+  constructor(
+    scope: Construct,
+    id: string,
+    databaseNames: string[],
+    props?: ChartProps,
+  ) {
+    super(scope, id, props);
 
     this.databases = databaseNames.map(
       (dbName) =>
@@ -60,17 +80,11 @@ export class LeodeCluster extends Chart {
           spec: {
             name: dbName,
             cluster: {
-              name: this.cluster.name,
+              name: LEODE_CLUSTER_NAME,
             },
             owner: dbName,
           },
         }),
     );
-
-    this.services = {
-      readAny: `${this.cluster.name}-r`,
-      readWrite: `${this.cluster.name}-rw`,
-      readOnly: `${this.cluster.name}-ro`,
-    };
   }
 }
