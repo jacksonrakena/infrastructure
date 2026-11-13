@@ -15,15 +15,17 @@ flowchart LR
         mxf["Mixer Frontend<br>finance.rakena.com.au"]
         bl["Blank<br>go.jacksonrakena.com"]
         hm["Homarr<br>home.rakena.com.au"]
+        ak["Authentik<br>id.rakena.com.au"]
   end
     client(["Internet"]) -..-> cf["Cloudflare"]
     gk_frontend["Gradekeeper Client<br>app.gradekeeper.xyz"] --> vsec
     cf -. via direct ..-> vsec
     vsec --> ingress
-    ingress --> gk & vw & mx & mxf & bl & hm
+    ingress --> gk & vw & mx & mxf & bl & hm & ak
     vw --> pg
     gk --> pg
     mx --> pg
+    ak --> pg
     cf -- Pages --> gk_frontend
      vw:::k8s
      pg:::k8s
@@ -33,6 +35,7 @@ flowchart LR
      mxf:::k8s
      bl:::k8s
      hm:::k8s
+     ak:::k8s
      client:::plain
      cf:::cloudflare
      cluster:::cluster
@@ -82,6 +85,7 @@ ready for sending to the cluster.
         3. Mixer (API and frontend) [jacksonrakena/mixer](https://github.com/jacksonrakena/mixer)
         4. Blank [jacksonrakena/blank](https://github.com/jacksonrakena/blank)
         5. Homarr [homarr-labs/homarr](https://github.com/homarr-labs/homarr)
+        6. Authentik (server + worker) [goauthentik/authentik](https://github.com/goauthentik/authentik)
     5. Configures Traefik resources (`src/traefik/traefik-stack.ts`):
         1. Creates service accounts, cluster roles, and bindings.
         2. Creates a Traefik deployment configured solely to run on port 443, with the Kubernetes Gateway provider enabled.
@@ -105,7 +109,8 @@ These secrets are excluded for security reasons.
 | `mixer-backend-config` (mixer.backend.env)                                                | ConfigMap                        | Environment variables for the Mixer API deployment, loaded as `key=value` lines.                                                                                               |
 | `blank-config` (go_targets.kdl)                                                           | ConfigMap                        | A single `targets.kdl` file containing the redirect target list for the Blank deployment.                                                                                      |
 | `homarr-secret` (homarr.env) | Secret/Opaque | Environment variables for the Homarr deployment, loaded as `key=value` lines. Must contain `SECRET_ENCRYPTION_KEY`. |
-| `pg-users/<app>.properties`                                                               | Secret/`basic-auth`              | Per-app `username` and `password` properties files (`gradekeeper`, `mixer`) used to materialise CloudNativePG managed roles and the secrets each app uses to connect to Leode. |
+| `authentik-secret` (authentik.env) | Secret/Opaque | Environment variables for the Authentik server and worker, loaded as `key=value` lines. Must contain `AUTHENTIK_SECRET_KEY`. |
+| `pg-users/<app>.properties`                                                               | Secret/`basic-auth`              | Per-app `username` and `password` properties files (`gradekeeper`, `mixer`, `authentik`) used to materialise CloudNativePG managed roles and the secrets each app uses to connect to Leode. |
 | `rakena-co-nz-cert` (cert-rakena.co.nz/tls.key, cert-rakena.co.nz/tls.crt)                | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.co.nz`.                                                                                                                           |
 | `rakena-com-au-cert` (cert-rakena.com.au/tls.key, cert-rakena.com.au/tls.crt)             | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.com.au`.                                                                                                                          |
 | `jacksonrakena-com-cert` (cert-jacksonrakena.com/tls.key, cert-jacksonrakena.com/tls.crt) | `kubernetes.io/tls`              | Contains the certificate and key for `jacksonrakena.com`.                                                                                                                      |

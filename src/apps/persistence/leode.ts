@@ -21,6 +21,7 @@ export class LeodeCluster extends Chart {
     id: string,
     storageClass: KubeStorageClass,
     roles: ClusterSpecManagedRoles[],
+    databaseNames: string[],
     props?: ChartProps,
   ) {
     super(scope, id, props);
@@ -49,7 +50,7 @@ export class LeodeCluster extends Chart {
       },
     });
 
-    this.databases = ["gradekeeper", "mixer"].map(
+    this.databases = databaseNames.map(
       (dbName) =>
         new Database(this, `${dbName}-db`, {
           metadata: {

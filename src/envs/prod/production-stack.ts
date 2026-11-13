@@ -19,6 +19,7 @@ import {
 } from "../../../imports/gateway.networking.k8s.io";
 import { createPostgresRoleAndSecret } from "../../util/pg-utils";
 import { Homarr } from "../../apps/homarr";
+import { Authentik } from "../../apps/authentik";
 
 export class ProductionStack extends Chart {
   constructor(scope: Construct, id: string, props: ChartProps) {
@@ -47,11 +48,13 @@ export class ProductionStack extends Chart {
 
     const gkRole = createPostgresRoleAndSecret(this, "gradekeeper");
     const mixerRole = createPostgresRoleAndSecret(this, "mixer");
+    const authentikRole = createPostgresRoleAndSecret(this, "authentik");
     const leode = new LeodeCluster(
       this,
       "leode",
       storage.ociFreeTransientStorageClass,
-      [gkRole, mixerRole].map((e) => e.role),
+      [gkRole, mixerRole, authentikRole].map((e) => e.role),
+      ["gradekeeper", "mixer", "authentik"],
       props,
     );
 
@@ -73,6 +76,15 @@ export class ProductionStack extends Chart {
       credentials.mixerBackendConfigMap,
       credentials.githubRegistrySecret,
       mixerRole.secret,
+      props,
+    );
+
+    const authentik = new Authentik(
+      this,
+      "authentik",
+      credentials.authentikSecret,
+      leode.services.readWrite,
+      authentikRole.secret,
       props,
     );
 
@@ -242,6 +254,11 @@ export class ProductionStack extends Chart {
         name: "home-route",
         hostname: "home.rakena.com.au",
         service: homarr.service,
+      },
+      {
+        name: "authentik-route",
+        hostname: "id.rakena.com.au",
+        service: authentik.service,
       },
     ].map(({ name, hostname, service }) =>
       createRoute(name, hostname, service),

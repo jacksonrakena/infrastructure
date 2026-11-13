@@ -22,6 +22,7 @@ export class ProductionCredentials extends Chart {
   public readonly gradekeeperConfigMap: kplus.IConfigMap;
   public readonly mixerBackendConfigMap: kplus.IConfigMap;
   public readonly homarrSecret: kplus.Secret;
+  public readonly authentikSecret: kplus.Secret;
 
   constructor(scope: Construct, id: string, props: ChartProps) {
     super(scope, id, props);
@@ -63,6 +64,11 @@ export class ProductionCredentials extends Chart {
 
     this.homarrSecret = new kplus.Secret(this, "homarr-secret", {
       stringData: createStringDataFromFile("secrets/homarr.env"),
+      immutable: false,
+    });
+
+    this.authentikSecret = new kplus.Secret(this, "authentik-secret", {
+      stringData: createStringDataFromFile("secrets/authentik.env"),
       immutable: false,
     });
   }
