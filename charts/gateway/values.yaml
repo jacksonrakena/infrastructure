@@ -11,6 +11,10 @@ infrastructure:
 # so this is the websecure entrypoint port (8443), not the public 443.
 port: 8443
 
+# Namespaces whose HTTPRoutes may attach to every listener.
+allowedRouteNamespaces:
+  - prod
+
 # HTTPS listeners, keyed by listener name. hostname may be omitted for a
 # catch-all listener. certificateSecret is a kubernetes.io/tls Secret in this
 # namespace (created by the secrets release).

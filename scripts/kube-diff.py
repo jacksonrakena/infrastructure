@@ -10,7 +10,7 @@ template` output lacks), then each group is passed to `kubectl diff
 --server-side` as Helm's field manager. A group whose namespace doesn't exist
 yet is reported as all-new instead of failing.
 
-Exit status follows kubectl diff: 0 no changes, 1 changes, 2+ error.
+Helm hook objects are skipped. Exit status follows kubectl diff: 0 no changes, 1 changes, 2+ error.
 The manifest stays in memory; it may contain decrypted Secrets.
 """
 import json, re, subprocess, sys
@@ -22,6 +22,10 @@ release_ns, release = sys.argv[1], sys.argv[2]
 groups = {}
 for doc in sys.stdin.read().split("\n---"):
     if not re.search(r"^kind: ", doc, re.M):
+        continue
+    # Hooks (e.g. webhook cert Jobs) run during install/upgrade and are deleted
+    # afterwards; they're not part of the release's steady state.
+    if re.search(r'^\s+"?helm\.sh/hook"?:', doc, re.M):
         continue
     m = re.search(r'^  namespace: "?([^"\n]+)"?\s*$', doc, re.M)
     groups.setdefault(m.group(1) if m else release_ns, []).append(doc)

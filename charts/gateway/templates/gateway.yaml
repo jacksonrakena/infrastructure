@@ -22,5 +22,11 @@ spec:
           - name: {{ required (printf "listeners.%s.certificateSecret is required" $name) $l.certificateSecret }}
       allowedRoutes:
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  {{- toYaml $.Values.allowedRouteNamespaces | nindent 18 }}
     {{- end }}

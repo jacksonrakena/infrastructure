@@ -1,0 +1,146 @@
+# kube-prometheus-stack: Prometheus Operator, Prometheus, Grafana,
+# kube-state-metrics and node-exporter.
+#
+# No persistent volumes (the OCI free-tier block volume budget is used up).
+# Prometheus keeps its TSDB in an emptyDir, so metrics history is lost when its
+# pod restarts. Grafana stores users, dashboards and settings in its own
+# database on Leode, so those persist.
+
+# CRDs come from the prometheus-operator-crds release (with the keep policy).
+crds:
+  enabled: false
+
+# No receivers are configured, so Alertmanager would only use resources.
+alertmanager:
+  enabled: false
+
+# OKE manages the control plane; these endpoints aren't scrapeable and would
+# show as permanently down.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeProxy: false
+
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 60s
+    evaluationInterval: 60s
+    retention: 3d
+    retentionSize: 3GB
+    storageSpec:
+      emptyDir:
+        sizeLimit: 4Gi
+    # Pick up every ServiceMonitor/PodMonitor/rule in the cluster, not only ones
+    # labelled for this release (e.g. CloudNativePG's PodMonitor for Leode).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 1536Mi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+grafana:
+  # Admin login from the secrets release (SOPS key grafana.adminPassword).
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: false
+  envFromSecrets:
+    # GF_DATABASE_USER / GF_DATABASE_PASSWORD (role "grafana" on Leode).
+    - name: grafana-db
+    # GF_AUTH_GENERIC_OAUTH_CLIENT_ID / _CLIENT_SECRET (Authentik OAuth client).
+    - name: grafana-oauth
+  grafana.ini:
+    database:
+      type: postgres
+      host: leode-rw.prod.svc:5432
+      name: grafana
+      ssl_mode: require
+      # Leode allows 100 connections in total across every app.
+      max_open_conn: 5
+      max_idle_conn: 2
+    server:
+      root_url: https://monitoring.rakena.com.au
+    # Authentik is the only way in: no username/password form, no HTTP basic
+    # auth for the API. To get back in if Authentik is down, set
+    # disable_login_form: false and sign in as admin (grafana.adminPassword).
+    auth:
+      disable_login_form: true
+    auth.basic:
+      enabled: false
+    # Sign in with Authentik. Its provider's redirect URI must be
+    # https://monitoring.rakena.com.au/login/generic_oauth
+    auth.generic_oauth:
+      enabled: true
+      name: authentik
+      # Skip Grafana's login page and go straight to Authentik.
+      auto_login: true
+      scopes: openid profile email
+      auth_url: https://id.rakena.com.au/application/o/authorize/
+      token_url: https://id.rakena.com.au/application/o/token/
+      api_url: https://id.rakena.com.au/application/o/userinfo/
+      use_pkce: true
+      allow_sign_up: true
+      # Grafana role from Authentik group membership, re-evaluated at each sign-in.
+      # authentik Admins become Grafana server admins (GrafanaAdmin).
+      role_attribute_path: contains(groups, 'authentik Admins') && 'GrafanaAdmin' || contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+      allow_assign_grafana_admin: true
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+  route:
+    main:
+      enabled: true
+      hostnames:
+        - monitoring.rakena.com.au
+      parentRefs:
+        - name: traefik-gateway
+          namespace: prod
+  resources:
+    requests:
+      cpu: 20m
+      memory: 128Mi
+    limits:
+      memory: 512Mi

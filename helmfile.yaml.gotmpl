@@ -8,6 +8,7 @@
 #   data      the shared volume and the Leode Postgres cluster (kept on uninstall)
 #   edge      the public Gateway
 #   apps      workloads in prod; each owns its own HTTPRoutes
+#   monitoring  Prometheus and Grafana (ephemeral storage)
 #
 # See README.md for usage (`make diff`, `make apply`).
 
@@ -32,6 +33,10 @@ repositories:
     url: https://pkgs.tailscale.com/helmcharts
   - name: authentik
     url: https://charts.goauthentik.io
+  - name: cnpg-grafana
+    url: https://cloudnative-pg.github.io/grafana-dashboards
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
 
 templates:
   app:
@@ -187,3 +192,40 @@ releases:
     needs: [prod/gateway, prod/data]
     values:
       - values/authentik.yaml
+
+  # -------------------------------------------------------------- monitoring
+  - name: prometheus-operator-crds
+    namespace: kube-system
+    chart: prometheus-community/prometheus-operator-crds
+    version: 33.0.2          # operator v0.95.2, match kube-prometheus-stack
+    labels:
+      tier: platform
+    values:
+      - values/prometheus-operator-crds.yaml
+
+  - name: monitoring
+    namespace: monitoring
+    chart: prometheus-community/kube-prometheus-stack
+    version: 93.3.1          # operator v0.95.2
+    labels:
+      tier: monitoring
+    needs:
+      - kube-system/cluster-config
+      - kube-system/prometheus-operator-crds
+      - prod/secrets
+      - prod/gateway
+      - prod/data            # Grafana's database
+    values:
+      - values/monitoring.yaml
+
+  # CloudNativePG dashboard (Leode) for Grafana.
+  - name: cnpg-dashboard
+    namespace: monitoring
+    chart: cnpg-grafana/cluster
+    version: 0.0.5
+    labels:
+      tier: monitoring
+    needs:
+      - monitoring/monitoring
+    values:
+      - values/cnpg-dashboard.yaml

@@ -1,0 +1,4 @@
+# ConfigMap picked up by Grafana's dashboard sidecar (any namespace with this label).
+grafanaDashboard:
+  sidecarLabel: grafana_dashboard
+  sidecarLabelValue: "1"

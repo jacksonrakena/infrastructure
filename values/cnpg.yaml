@@ -3,3 +3,6 @@ crds:
   # The chart templates the CRDs with helm.sh/resource-policy: keep, so removing
   # this release never deletes the Leode Cluster.
   create: true
+monitoring:
+  # Operator metrics for the CloudNativePG Grafana dashboard's operator panels.
+  podMonitorEnabled: true

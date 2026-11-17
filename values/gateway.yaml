@@ -2,6 +2,11 @@ infrastructure:
   annotations:
     oci.oraclecloud.com/load-balancer-type: nlb
 
+# Grafana's route lives in the monitoring namespace.
+allowedRouteNamespaces:
+  - prod
+  - monitoring
+
 listeners:
   https-rakenaconz:
     hostname: "*.rakena.co.nz"

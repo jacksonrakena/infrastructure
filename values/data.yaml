@@ -16,5 +16,5 @@ leode:
     storageClass: oci-free-transient
     size: 50Gi
   enablePodMonitor: true
-  roles: [gradekeeper, mixer, authentik]
-  databases: [gradekeeper, mixer, authentik]
+  roles: [gradekeeper, mixer, authentik, grafana]
+  databases: [gradekeeper, mixer, authentik, grafana]

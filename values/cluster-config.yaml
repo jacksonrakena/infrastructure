@@ -7,6 +7,7 @@ namespaces:
       app.kubernetes.io/name: cloudnative-pg
   tailscale: {}
   traefik: {}
+  monitoring: {}
 
 storageClasses:
   # Retained block volumes on the OCI free tier (vpusPerGB 0 = lower cost tier).

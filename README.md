@@ -87,6 +87,9 @@ Releases are grouped into tiers (helmfile label `tier`) and installed in depende
 | apps | `mixer-api`, `mixer-frontend` | local `app` | `prod` | [Mixer](https://github.com/jacksonrakena/mixer) at finance-api.rakena.com.au, finance.rakena.com.au |
 | apps | `blank` | local `app` | `prod` | [Blank](https://github.com/jacksonrakena/blank) at go.jacksonrakena.com |
 | apps | `authentik` | [`authentik`](https://github.com/goauthentik/helm) | `prod` | [Authentik](https://goauthentik.io) at id.rakena.com.au |
+| platform | `prometheus-operator-crds` | [`prometheus-operator-crds`](https://github.com/prometheus-community/helm-charts) | — | Prometheus Operator CRDs, with the keep policy |
+| monitoring | `monitoring` | [`kube-prometheus-stack`](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) | `monitoring` | Prometheus, Grafana at monitoring.rakena.com.au, kube-state-metrics, node-exporter |
+| monitoring | `cnpg-dashboard` | [`cnpg-grafana/cluster`](https://github.com/cloudnative-pg/grafana-dashboards) | `monitoring` | CloudNativePG dashboard for Grafana |
 
 Each app owns its `HTTPRoute`s (`routes:` in its values file). Vaultwarden and Homarr use the local `app` chart because Vaultwarden has no official chart, and Homarr's chart can't mount a subPath of the shared volume, which is where its data lives.
 
@@ -102,9 +105,25 @@ Traefik serves HTTPS only, through a `LoadBalancer` Service annotated `oci.oracl
 
 Gateway listeners use port `8443`, Traefik's `websecure` entrypoint (container) port, which the Service publishes as 443.
 
+### Monitoring
+
+Prometheus scrapes every `ServiceMonitor` and `PodMonitor` in the cluster, including Leode and the CloudNativePG operator. Grafana is at monitoring.rakena.com.au, with the kube-prometheus-stack dashboards and the [CloudNativePG dashboard](https://github.com/cloudnative-pg/grafana-dashboards) (`cnpg-dashboard` release).
+
+- **Grafana** stores users, dashboards and settings in its own `grafana` database on Leode (role `grafana`, pool of 5 connections), so they survive restarts.
+- **Prometheus** has no persistent volume, because the free-tier block volume budget is used up. It keeps 3 days (at most 3 GB) in an `emptyDir`, so a pod restart loses metrics history.
+- Alertmanager is disabled (no receivers), as are the control-plane scrapes OKE doesn't expose.
+
+Sign-in is through Authentik only (`id.rakena.com.au`, OAuth client in SOPS as `grafana.oauth`); Grafana's password form and API basic auth are disabled. Roles follow Authentik groups at each sign-in: `authentik Admins` → Grafana server admin, `Grafana Admins` → Admin, `Grafana Editors` → Editor, everyone else → Viewer.
+
+If Authentik is unavailable, set `auth.disable_login_form: false` in `values/monitoring.yaml`, apply, and sign in as `admin` with `grafana.adminPassword`:
+
+```
+sops decrypt --extract '["grafana"]["adminPassword"]' environments/prod/secrets.sops.yaml
+```
+
 ### Leode
 
-A single CloudNativePG cluster serves every app that needs Postgres (Gradekeeper, Mixer, Authentik), with one managed login role and database per app. It runs `instances: 1`: each instance needs its own volume, and the free tier allows 200 GiB of block storage (`arthur-global-data` 50 GiB + 2 node boot volumes at 50 GiB + 1 Leode instance at 50 GiB). For cluster maintenance, scale to 2 instances for failover in `values/data.yaml`, then back to 1.
+A single CloudNativePG cluster serves every app that needs Postgres (Gradekeeper, Mixer, Authentik, Grafana), with one managed login role and database per app. It runs `instances: 1`: each instance needs its own volume, and the free tier allows 200 GiB of block storage (`arthur-global-data` 50 GiB + 2 node boot volumes at 50 GiB + 1 Leode instance at 50 GiB). For cluster maintenance, scale to 2 instances for failover in `values/data.yaml`, then back to 1.
 
 ## Secrets
 
@@ -114,10 +133,12 @@ All secrets are in `environments/prod/secrets.sops.yaml`. Keys are readable, val
 | --- | ------- | ------- |
 | `tls.<domain>.{crt,key}` | `tls-<domain>` (`kubernetes.io/tls`) | `gateway` listeners |
 | `registry.ghcr` | `ghcr-pull` (`kubernetes.io/dockerconfigjson`) | Pulling private images from GitHub Container Registry |
-| `postgresRoles.<app>.{username,password}` | `leode-role-<app>` (`kubernetes.io/basic-auth`) | Leode managed roles, and each app's database login |
+| `postgresRoles.<app>.{username,password}` | `leode-role-<app>` (`kubernetes.io/basic-auth`); Grafana's also as `monitoring/grafana-db` | Leode managed roles, and each app's database login |
 | `env.<app>` | `<app>-env`, loaded as environment variables | `vaultwarden`, `gradekeeper`, `mixer` (API), `homarr` (`SECRET_ENCRYPTION_KEY`), `authentik` (`AUTHENTIK_SECRET_KEY`) |
 | `blankTargets` | ConfigMap `blank-targets` (`targets.kdl`) | Blank's redirect targets |
 | `tailscaleOAuth.{client_id,client_secret}` | `tailscale/operator-oauth` | Tailscale operator |
+| `grafana.adminPassword` | `monitoring/grafana-admin` | Grafana `admin` login (break-glass only) |
+| `grafana.oauth.{clientId,clientSecret}` | `monitoring/grafana-oauth` | Grafana's Authentik OAuth client |
 
 Edit with `make secrets`, which opens the decrypted file in `$EDITOR` and re-encrypts on save. Then `make apply SELECTOR=name=secrets`. Pods read env-var Secrets at startup, so restart the app afterwards (`kubectl rollout restart -n prod deployment/<app>`). Leode picks up role password changes automatically.
 

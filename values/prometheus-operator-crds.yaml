@@ -1,0 +1,4 @@
+crds:
+  # Deleting a CRD deletes every resource of that type (e.g. CNPG's PodMonitor).
+  annotations:
+    helm.sh/resource-policy: keep
