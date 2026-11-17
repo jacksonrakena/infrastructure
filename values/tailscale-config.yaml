@@ -1,0 +1,5 @@
+connectors:
+  # Exit node in Melbourne, through the Arthur cluster.
+  mel-arthur-exit:
+    exitNode: true
+    replicas: 1

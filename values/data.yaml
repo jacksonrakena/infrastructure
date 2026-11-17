@@ -1,0 +1,20 @@
+volumeClaims:
+  # Shared by Vaultwarden and Homarr (subPaths vaultwarden-data, homarr-appdata).
+  # 50 GiB is the OCI minimum volume size, not what's needed.
+  arthur-global-data:
+    storageClassName: oci-free
+    size: 50Gi
+    volumeName: csi-57c34efd-2ee2-48e8-9d30-6c960576bd44
+
+leode:
+  name: leode
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.3-system-trixie
+  # One instance fits the OCI free-tier 200 GiB block storage budget. Scale to 2
+  # during cluster maintenance for failover, then back to 1.
+  instances: 1
+  storage:
+    storageClass: oci-free-transient
+    size: 50Gi
+  enablePodMonitor: true
+  roles: [gradekeeper, mixer, authentik]
+  databases: [gradekeeper, mixer, authentik]

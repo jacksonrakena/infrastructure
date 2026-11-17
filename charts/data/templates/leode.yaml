@@ -1,0 +1,45 @@
+{{- with .Values.leode }}
+{{- if .enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .name }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  {{- with .imageName }}
+  imageName: {{ . }}
+  {{- end }}
+  instances: {{ .instances }}
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+  storage:
+    storageClass: {{ required "leode.storage.storageClass is required" .storage.storageClass }}
+    size: {{ .storage.size }}
+  {{- if .roles }}
+  managed:
+    roles:
+      {{- range .roles }}
+      - name: {{ . }}
+        login: true
+        passwordSecret:
+          name: {{ $.Values.leode.rolePasswordSecretPrefix }}{{ . }}
+      {{- end }}
+  {{- end }}
+  monitoring:
+    enablePodMonitor: {{ .enablePodMonitor }}
+{{- range .databases }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ . }}
+spec:
+  name: {{ . }}
+  owner: {{ . }}
+  cluster:
+    name: {{ $.Values.leode.name }}
+{{- end }}
+{{- end }}
+{{- end }}

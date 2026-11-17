@@ -1,0 +1,28 @@
+image: ghcr.io/jacksonrakena/mixer:latest
+imagePullSecrets: [ghcr-pull]
+replicas: 3
+containerPort: 8080
+envFromSecrets: [mixer-env]
+env:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://leode-rw/mixer
+  SPRING_PROFILES_ACTIVE: prod
+  SPRINGDOC_API_DOCS_ENABLED: "false"
+  SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+  MIXER_REFRESH_FX_INITIAL: "-1"
+  MIXER_REFRESH_AGGREGATIONS_INITIAL: "-1"
+  SPRING_SESSION_COOKIE_NAME: mixer-session-id
+  SPRING_SESSION_TIMEOUT: 8h
+secretEnv:
+  SPRING_DATASOURCE_USERNAME: { secret: leode-role-mixer, key: username }
+  SPRING_DATASOURCE_PASSWORD: { secret: leode-role-mixer, key: password }
+livenessProbe:
+  httpGet: { path: /actuator/health/liveness, port: http }
+  initialDelaySeconds: 20
+  periodSeconds: 10
+readinessProbe:
+  httpGet: { path: /actuator/health/readiness, port: http }
+  initialDelaySeconds: 20
+  periodSeconds: 15
+routes:
+  finance-api-route:
+    hostname: finance-api.rakena.com.au

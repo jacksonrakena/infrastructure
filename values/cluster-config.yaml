@@ -1,0 +1,28 @@
+namespaces:
+  prod:
+    labels:
+      ns: prod
+  cnpg-system:
+    labels:
+      app.kubernetes.io/name: cloudnative-pg
+  tailscale: {}
+  traefik: {}
+
+storageClasses:
+  # Retained block volumes on the OCI free tier (vpusPerGB 0 = lower cost tier).
+  oci-free:
+    provisioner: blockvolume.csi.oraclecloud.com
+    parameters:
+      vpusPerGB: "0"
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+  # Same, but volumes are deleted with their claim. Used for Leode instances,
+  # whose data is replicated/recreated by CloudNativePG.
+  oci-free-transient:
+    provisioner: blockvolume.csi.oraclecloud.com
+    parameters:
+      vpusPerGB: "0"
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true

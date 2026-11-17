@@ -51,108 +51,106 @@ flowchart LR
     classDef Rose stroke-width:1px, stroke-dasharray:none, stroke:#FF5978, fill:#FFDFE5, color:#8E2236
 ```
 
-This repository holds a variety of resources for bringing up all of my self-hosted services, including a `cdk8s` TypeScript project that can compile to a complete Kubernetes manifest for all resources running on-cluster. This includes a Traefik ingest controller, and TLS certificate provisioning.
+This repository describes everything running on my self-hosted Kubernetes cluster (Arthur, on Oracle Cloud's free tier) as [helmfile](https://helmfile.readthedocs.io/) releases: upstream Helm charts for third-party software, small local charts for everything else, and one SOPS-encrypted file for every secret.
 
-This manifest does not make any assumptions about the environment it is deployed in. It is designed to be deployed to a
-fresh cluster. All resources are deployed in the `prod` namespace to avoid collisions.
+I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you do, you'll need to replace the secrets with your own.
 
-The only items missing are secrets (`/secrets`) that are required to bring up the stack. These are not included for
-security reasons.
+## Layout
 
-I do not intend for this repository to be used by anyone else (but feel free to use it as examples/learning), but if you
-do, you'll need to replace the secrets with your own.
+| Path | What it is |
+| ---- | ---------- |
+| `helmfile.yaml.gotmpl` | Every release, its chart version, namespace and dependencies (`needs`) |
+| `values/<release>.yaml` | Non-secret configuration for each release |
+| `environments/prod/secrets.sops.yaml` | Every secret, encrypted with [SOPS](https://github.com/getsops/sops) + [age](https://age-encryption.org) |
+| `charts/` | Local charts: `app` (generic web app), `data`, `secrets`, `gateway`, `cluster-config`, `gateway-api-crds`, `tailscale-crds`, `tailscale-config` |
+| `scripts/diff.sh` | Previews changes against the cluster (`make diff`) |
+| `docs/helm-cutover.md` | One-off runbook for the migration from the old cdk8s manifests |
 
+## Releases
 
-## Kubernetes overview
+Releases are grouped into tiers (helmfile label `tier`) and installed in dependency order.
 
-This is a TypeScript project that creates a complete set of Kubernetes manifests in the
-`/dist` folder, ready for sending to the cluster. The output is split into three layers
-(`src/main.ts`), each in its own folder, so that only the layer that is safe to prune is pruned:
+| Tier | Release | Chart | Namespace | Notes |
+| ---- | ------- | ----- | --------- | ----- |
+| platform | `gateway-api-crds` | local (vendored upstream v1.6.1) | — | Gateway API standard CRDs |
+| platform | `cluster-config` | local | — | Namespaces and the OCI block volume storage classes |
+| platform | `cnpg` | [`cloudnative-pg`](https://github.com/cloudnative-pg/charts) | `cnpg-system` | CloudNativePG operator and CRDs |
+| platform | `traefik` | [`traefik`](https://github.com/traefik/traefik-helm-chart) | `traefik` | Gateway API controller, `GatewayClass`, and the Oracle Network Load Balancer |
+| platform | `tailscale-crds` | local (vendored from `tailscale-operator`) | — | Tailscale CRDs, with the keep policy the upstream chart lacks |
+| platform | `tailscale-operator` | [`tailscale-operator`](https://tailscale.com/kb/1236/kubernetes-operator) | `tailscale` | Tailscale operator (`installCRDs: false`) |
+| platform | `tailscale-config` | local | `tailscale` | The `mel-arthur-exit` exit node `Connector` |
+| secrets | `secrets` | local | `prod` | Every Secret, rendered from the SOPS file |
+| data | `data` | local | `prod` | `arthur-global-data` volume, the `leode` Postgres cluster, its roles and databases |
+| edge | `gateway` | local | `prod` | The public `Gateway`, terminating TLS for `rakena.co.nz`, `rakena.com.au` and `jacksonrakena.com` |
+| apps | `vaultwarden` | local `app` | `prod` | [dani-garcia/vaultwarden](https://github.com/dani-garcia/vaultwarden) at vault.rakena.com.au, vault.rakena.co.nz |
+| apps | `homarr` | local `app` | `prod` | [homarr-labs/homarr](https://github.com/homarr-labs/homarr) at home.rakena.com.au |
+| apps | `gradekeeper` | local `app` | `prod` | [Gradekeeper](https://github.com/jacksonrakena/gradekeeper) API at api.gradekeeper.xyz |
+| apps | `mixer-api`, `mixer-frontend` | local `app` | `prod` | [Mixer](https://github.com/jacksonrakena/mixer) at finance-api.rakena.com.au, finance.rakena.com.au |
+| apps | `blank` | local `app` | `prod` | [Blank](https://github.com/jacksonrakena/blank) at go.jacksonrakena.com |
+| apps | `authentik` | [`authentik`](https://github.com/goauthentik/helm) | `prod` | [Authentik](https://goauthentik.io) at id.rakena.com.au |
 
-| Layer | Folder | Contents | Pruned? |
-| ----- | ------ | -------- | ------- |
-| Platform | `dist/platform` | Upstream CloudNativePG, Gateway API, Traefik Gateway RBAC and Tailscale operator manifests, and the `prod` namespace (`PlatformLayer`) | Never: removing a CRD deletes every resource of that type |
-| Data | `dist/data` | Storage classes, the global data volume claim, and the `Leode` Postgres cluster (`DataLayer`) | Never: deleting these destroys data |
-| Prod | `dist/prod` | Everything in `ProductionStack`: credentials, apps, Leode roles and databases, Traefik, routing | Yes, through the `jci-prod` ApplySet |
+Each app owns its `HTTPRoute`s (`routes:` in its values file). Vaultwarden and Homarr use the local `app` chart because Vaultwarden has no official chart, and Homarr's chart can't mount a subPath of the shared volume, which is where its data lives.
 
-1. `PlatformLayer` (`src/envs/prod/layers.ts`) creates the `prod` namespace and includes the upstream manifests.
-2. `ProductionStack` (`src/envs/prod/production-stack.ts`):
-    1. Loads credentials from a local directory as Kubernetes secrets and configmap resources
-       - **Possible improvement** - use Oracle secret management instead of raw Kubernetes secrets
-    2. Uses the global data volume (`ProductionBlockStorage`, created in the data layer)
-       - This was used by several apps in the past, but is currently only used by Vaultwarden and Homarr. It is massively overprovisioned (50GiB) due to the minimum volume size set by Oracle Cloud
-    3. Defines the managed roles and per-app databases for the `Leode` CloudNativePG Postgres cluster (the cluster itself is created in the data layer)
-       - This single cluster is used by all apps that require a Postgres database
-       - This cluster is only configured `instances: 1`, as each instance needs a dedicated volume, and the Oracle free tier only allows 200 GiB (global data volume 50 GiB + 2 boot volumes for Kube nodes @ 50 GiB each + 1 Leode instance @ 50 GiB = 200 GiB total).
-         - During Kubernetes cluster maintenance, I usually scale up to 2 instances (primary + replica) for zero-downtime failover, then scale back down to 1 (primary only) after maintenance is complete.
-    4. Provisions all apps, linking them to credentials, the Postgres cluster, and the data volume as necessary
-        1. Vault [dani-garcia/vaultwarden](https://github.com/dani-garcia/vaultwarden)
-        2. Gradekeeper Server (API) [jacksonrakena/gradekeeper](https://github.com/jacksonrakena/gradekeeper)
-        3. Mixer (API and frontend) [jacksonrakena/mixer](https://github.com/jacksonrakena/mixer)
-        4. Blank [jacksonrakena/blank](https://github.com/jacksonrakena/blank)
-        5. Homarr [homarr-labs/homarr](https://github.com/homarr-labs/homarr)
-        6. Authentik (server + worker) [goauthentik/authentik](https://github.com/goauthentik/authentik)
-    5. Configures Traefik resources (`src/traefik/traefik-stack.ts`):
-        1. Creates service accounts, cluster roles, and bindings.
-        2. Creates a Traefik deployment configured solely to run on port 443, with the Kubernetes Gateway provider enabled.
-           - This operates in controller mode providing the Gateway API controller
-           - Also creates a `LoadBalancer` service annotated for an Oracle Cloud Network Load Balancer (NLB)
-             - Traefik + Gateway API can do all the functions of a normal Oracle Load Balancer, so there is no need to use one. NLB is included in the free tier.
-        3. Registers a `GatewayClass` for the `traefik.io/gateway-controller`.
-    6. Creates a Gateway API `Gateway` terminating TLS for `rakena.co.nz`, `rakena.com.au`, and `jacksonrakena.com`, and an `HTTPRoute` per hostname pointing at the appropriate backing service.
-        - **Improvement** - automate the Cloudflare SSL cert retrieval + improve code structure around routing (move the routes into app ownership)
+### Cluster-critical resources
 
-### Secrets (`/secrets`)
+Anything whose deletion would lose data or break the cluster carries `helm.sh/resource-policy: keep`, so uninstalling or renaming a release never deletes it: every CRD, the namespaces, the storage classes, the `arthur-global-data` volume claim and the `leode` Cluster. Removing one of these from a chart leaves it on the cluster; delete it by hand if that is really intended.
 
-This directory contains production-level secrets that the stack depends on.  
-These secrets are excluded for security reasons.
+Everything else is pruned normally: when a template stops rendering an object, Helm deletes it on the next `make apply`.
 
-| Name                                                                                      | Type                             | Expected value                                                                                                                                                                 |
-| ----------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `vault-secret` (vaultwarden.env)                                                          | Secret/Opaque                    | Environment variables for the Vaultwarden deployment, loaded as `key=value` lines.                                                                                             |
-| `gh-container-registry` (docker-registry-config.json)                                     | `kubernetes.io/dockerconfigjson` | Credentials for GitHub Container Registry.                                                                                                                                     |
-| `gradekeeper-config` (gradekeeper-server.env)                                             | ConfigMap                        | Contains a single file key of `.env` that contains valid [Gradekeeper server configuration](https://github.com/gradekeeper/server/blob/main/src/config.rs).                    |
-| `mixer-backend-config` (mixer.backend.env)                                                | ConfigMap                        | Environment variables for the Mixer API deployment, loaded as `key=value` lines.                                                                                               |
-| `blank-config` (go_targets.kdl)                                                           | ConfigMap                        | A single `targets.kdl` file containing the redirect target list for the Blank deployment.                                                                                      |
-| `homarr-secret` (homarr.env) | Secret/Opaque | Environment variables for the Homarr deployment, loaded as `key=value` lines. Must contain `SECRET_ENCRYPTION_KEY`. |
-| `authentik-secret` (authentik.env) | Secret/Opaque | Environment variables for the Authentik server and worker, loaded as `key=value` lines. Must contain `AUTHENTIK_SECRET_KEY`. |
-| `pg-users/<app>.properties`                                                               | Secret/`basic-auth`              | Per-app `username` and `password` properties files (`gradekeeper`, `mixer`, `authentik`) used to materialise CloudNativePG managed roles and the secrets each app uses to connect to Leode. |
-| `rakena-co-nz-cert` (cert-rakena.co.nz/tls.key, cert-rakena.co.nz/tls.crt)                | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.co.nz`.                                                                                                                           |
-| `rakena-com-au-cert` (cert-rakena.com.au/tls.key, cert-rakena.com.au/tls.crt)             | `kubernetes.io/tls`              | Contains the certificate and key for `rakena.com.au`.                                                                                                                          |
-| `jacksonrakena-com-cert` (cert-jacksonrakena.com/tls.key, cert-jacksonrakena.com/tls.crt) | `kubernetes.io/tls`              | Contains the certificate and key for `jacksonrakena.com`.                                                                                                                      |
+### Load balancer
+
+Traefik serves HTTPS only, through a `LoadBalancer` Service annotated `oci.oraclecloud.com/load-balancer-type: nlb`, so Oracle provisions a free-tier Network Load Balancer rather than a (paid) Load Balancer. Traefik and Gateway API do everything the OCI Load Balancer would. The Service pins the reserved public IP `158.179.25.151` and node port `32700` (`values/traefik.yaml`); edit these for another environment.
+
+Gateway listeners use port `8443`, Traefik's `websecure` entrypoint (container) port, which the Service publishes as 443.
+
+### Leode
+
+A single CloudNativePG cluster serves every app that needs Postgres (Gradekeeper, Mixer, Authentik), with one managed login role and database per app. It runs `instances: 1`: each instance needs its own volume, and the free tier allows 200 GiB of block storage (`arthur-global-data` 50 GiB + 2 node boot volumes at 50 GiB + 1 Leode instance at 50 GiB). For cluster maintenance, scale to 2 instances for failover in `values/data.yaml`, then back to 1.
+
+## Secrets
+
+All secrets are in `environments/prod/secrets.sops.yaml`. Keys are readable, values are encrypted to the age recipients in `.sops.yaml`. Decryption happens in exactly one place, `values/secrets.yaml.gotmpl`, which turns the file into Kubernetes Secrets (the `secrets` release). App releases only reference those Secrets by name, so no app chart ever handles secret material.
+
+| Key | Becomes | Used by |
+| --- | ------- | ------- |
+| `tls.<domain>.{crt,key}` | `tls-<domain>` (`kubernetes.io/tls`) | `gateway` listeners |
+| `registry.ghcr` | `ghcr-pull` (`kubernetes.io/dockerconfigjson`) | Pulling private images from GitHub Container Registry |
+| `postgresRoles.<app>.{username,password}` | `leode-role-<app>` (`kubernetes.io/basic-auth`) | Leode managed roles, and each app's database login |
+| `env.<app>` | `<app>-env`, loaded as environment variables | `vaultwarden`, `gradekeeper`, `mixer` (API), `homarr` (`SECRET_ENCRYPTION_KEY`), `authentik` (`AUTHENTIK_SECRET_KEY`) |
+| `blankTargets` | ConfigMap `blank-targets` (`targets.kdl`) | Blank's redirect targets |
+| `tailscaleOAuth.{client_id,client_secret}` | `tailscale/operator-oauth` | Tailscale operator |
+
+Edit with `make secrets`, which opens the decrypted file in `$EDITOR` and re-encrypts on save. Then `make apply SELECTOR=name=secrets`. Pods read env-var Secrets at startup, so restart the app afterwards (`kubectl rollout restart -n prod deployment/<app>`). Leode picks up role password changes automatically.
+
+The age private key is at `~/Library/Application Support/sops/age/keys.txt` (macOS; `~/.config/sops/age/keys.txt` on Linux). **Back it up**: without it the secrets can't be decrypted. To add another key (a second machine, a backup key), add its public key to `.sops.yaml` and run `sops updatekeys environments/prod/secrets.sops.yaml`.
 
 ## Recipes
 
-#### Load balancer setup
-
-You'll need to edit `src/traefik/traefik-stack.ts` to have your Oracle Network Load Balancer
-settings.
+Install the pinned tooling (kubectl, helm, helmfile, sops, age) with `mise install`. No Helm plugins are needed.
 
 #### Preview changes
 
-Builds the manifest and shows what would change on the cluster, including any prod objects that would be pruned. Changes nothing:
-
 ```
 make diff
+make diff SELECTOR=tier=apps
 ```
 
-#### Bring everything up
+Renders each release and shows what server-side apply would change on the cluster (Secret values are masked). It doesn't show objects Helm would delete because they were removed from a chart.
 
-Builds the manifest and applies the platform, data and prod layers in order with server-side apply:
+#### Apply
 
 ```
-make apply
+make apply                          # everything, in dependency order
+make apply SELECTOR=name=mixer-api  # one release (any helmfile selector)
 ```
 
-The prod layer is applied as the `jci-prod` [ApplySet](https://kubernetes.io/blog/2023/05/09/introducing-kubectl-applyset-pruning/) (`KUBECTL_APPLYSET=true`, alpha in kubectl), so prod objects removed from the code are deleted from the cluster. Pruning is guarded by `scripts/kube-apply.sh`:
+#### Upgrade an upstream chart
 
-- Only objects a previous apply labelled as members of `jci-prod` can be pruned. Anything created outside this repository is never touched.
-- If anything would be pruned, the apply stops before changing anything and lists it. Re-run with `CONFIRM_PRUNE=1 make apply` after reviewing the list.
-- Pruning a protected kind (persistent volumes and claims, storage classes, CRDs, namespaces, CNPG clusters) is always refused. Delete those by hand if that is really intended.
+Bump `version:` for the release in `helmfile.yaml.gotmpl`, `make diff SELECTOR=name=<release>`, then apply. For the Gateway API CRDs, run `scripts/vendor-gateway-api.sh <version>` and bump `charts/gateway-api-crds/Chart.yaml`. For Tailscale, run `scripts/vendor-tailscale-crds.sh <version>`, bump `charts/tailscale-crds/Chart.yaml`, and keep the `tailscale-operator` release on the same version.
 
-Platform and data objects are never pruned. When removing something from those layers, delete it from the cluster by hand as well.
+#### Add an app
 
-Renaming a construct changes the generated resource name, so the old object is pruned and a new one created. That is harmless for deployments, but recreates secrets and services under new names.
+Add a release that inherits the `app` template in `helmfile.yaml.gotmpl`, write `values/<name>.yaml` (image, port, env, `routes:`), and add any secrets under `env.<name>` with `make secrets`.
 
 ## Copyright
 

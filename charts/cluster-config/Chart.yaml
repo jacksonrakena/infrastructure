@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cluster-config
+description: Cluster-scoped structure every other release depends on - namespaces and storage classes.
+type: application
+version: 1.0.0

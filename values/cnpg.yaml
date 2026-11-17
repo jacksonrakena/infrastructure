@@ -1,0 +1,5 @@
+fullnameOverride: cnpg-operator
+crds:
+  # The chart templates the CRDs with helm.sh/resource-policy: keep, so removing
+  # this release never deletes the Leode Cluster.
+  create: true

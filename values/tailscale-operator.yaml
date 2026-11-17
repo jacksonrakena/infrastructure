@@ -1,0 +1,21 @@
+# The OAuth client lives in the secrets release (Secret tailscale/operator-oauth).
+oauthSecretVolume:
+  secret:
+    secretName: operator-oauth
+
+# CRDs come from the tailscale-crds release (with helm.sh/resource-policy: keep).
+installCRDs: false
+
+# Images must be fully qualified: the nodes' container runtime enforces
+# short-name mode, and the chart defaults (tailscale/...) are ambiguous there.
+# Tags default to the chart's appVersion (v1.104.7).
+operatorConfig:
+  image:
+    repository: docker.io/tailscale/k8s-operator
+  hostname: tailscale-operator
+  defaultTags:
+    - "tag:k8s-operator"
+proxyConfig:
+  image:
+    repository: docker.io/tailscale/tailscale
+  defaultTags: "tag:k8s"

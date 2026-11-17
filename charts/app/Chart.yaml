@@ -1,0 +1,5 @@
+apiVersion: v2
+name: app
+description: Generic single-container web app - Deployment, Service, Gateway API HTTPRoutes and optional read-only cluster access.
+type: application
+version: 1.0.0

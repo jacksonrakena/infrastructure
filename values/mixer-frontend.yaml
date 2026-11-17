@@ -1,0 +1,8 @@
+image: ghcr.io/jacksonrakena/mixer:latest-frontend
+imagePullSecrets: [ghcr-pull]
+containerPort: 3000
+env:
+  API_BASE_URL: https://finance-api.rakena.com.au
+routes:
+  finance-frontend-route:
+    hostname: finance.rakena.com.au

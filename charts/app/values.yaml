@@ -1,0 +1,67 @@
+# Resource names default to the release name.
+nameOverride: ""
+
+image: ""
+imagePullPolicy: ""
+imagePullSecrets: []        # names of dockerconfigjson Secrets
+replicas: 1
+# RollingUpdate (default) or Recreate. Use Recreate for anything that mounts a
+# ReadWriteOnce volume or a single-writer database file.
+strategy:
+  type: RollingUpdate
+  maxUnavailable: 1
+
+args: []
+containerPort: 8080
+# Plain environment variables.
+env: {}
+# Environment variables read from individual Secret keys:
+#   DATABASE_PASSWORD: { secret: leode-role-app, key: password }
+secretEnv: {}
+# Load every key of these Secrets / ConfigMaps as environment variables.
+envFromSecrets: []
+envFromConfigMaps: []
+
+startupProbe: {}
+livenessProbe: {}
+readinessProbe: {}
+
+resources:
+  requests:
+    memory: 500Mi
+
+podAnnotations: {}
+# Defaults match what the previous cdk8s-plus manifests applied.
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroupChangePolicy: Always
+securityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: false
+affinity: {}
+
+# Volumes, keyed by volume name:
+#   data:
+#     persistentVolumeClaim: { claimName: shared }   # any core volume source
+#     mountPath: /data
+#     subPath: app-data                               # optional
+#     readOnly: false
+volumes: {}
+
+service:
+  port: 80
+
+# Gateway API routes to the Service. One HTTPRoute per entry, keyed by route name.
+gateway:
+  name: traefik-gateway
+routes: {}
+#  app-route:
+#    hostname: app.example.com
+
+# Read-only access to cluster resources through a dedicated ServiceAccount.
+clusterAccess:
+  enabled: false
+  # Standard ClusterRole rules.
+  rules: []

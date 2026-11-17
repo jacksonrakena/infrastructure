@@ -1,0 +1,15 @@
+{{- /*
+  Re-emit each document of the vendored bundle with the keep policy added.
+*/ -}}
+{{- range $doc := splitList "\n---" (.Files.Get "upstream/crds.yaml") }}
+{{- $obj := fromYaml $doc }}
+{{- if $obj.kind }}
+{{- $meta := $obj.metadata | default dict }}
+{{- $annotations := $meta.annotations | default dict }}
+{{- $_ := set $annotations "helm.sh/resource-policy" "keep" }}
+{{- $_ := set $meta "annotations" $annotations }}
+{{- $_ := set $obj "metadata" $meta }}
+---
+{{ toYaml $obj }}
+{{- end }}
+{{- end }}

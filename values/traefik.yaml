@@ -1,0 +1,44 @@
+# Traefik serves only the Kubernetes Gateway API, on 443, behind an OCI
+# Network Load Balancer (free tier) - it replaces an OCI Load Balancer entirely.
+
+deployment:
+  replicas: 1
+
+providers:
+  kubernetesGateway:
+    enabled: true
+  kubernetesCRD:
+    enabled: false
+  kubernetesIngress:
+    enabled: false
+
+ingressClass:
+  enabled: false
+
+# The GatewayClass is owned here; the Gateway itself is the `gateway` release.
+gatewayClass:
+  enabled: true
+  name: traefik-gateway-class
+gateway:
+  enabled: false
+
+ports:
+  # The web entrypoint stays internal: there is no plain-HTTP listener.
+  web:
+    expose:
+      default: false
+  websecure:
+    # Container port 8443 (Gateway listeners use this), published as 443.
+    exposedPort: 443
+    # Pinned to the node port the NLB has always used, so its backend set and
+    # security list rules don't change.
+    nodePort: 32700
+
+service:
+  annotations:
+    oci.oraclecloud.com/load-balancer-type: nlb
+  spec:
+    type: LoadBalancer
+    # Reserved OCI public IP; DNS for every hostname points here.
+    loadBalancerIP: 158.179.25.151
+    externalTrafficPolicy: Cluster

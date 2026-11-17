@@ -1,0 +1,16 @@
+# Namespaces, created before any release that lives in them.
+# Each is kept on uninstall: deleting a namespace deletes everything in it.
+namespaces: {}
+#  prod:
+#    labels:
+#      ns: prod
+
+# StorageClasses. Parameters are immutable once created, and volumes keep a
+# reference to their class, so these are kept on uninstall too.
+storageClasses: {}
+#  oci-free:
+#    provisioner: blockvolume.csi.oraclecloud.com
+#    parameters: { vpusPerGB: "0" }
+#    reclaimPolicy: Retain
+#    volumeBindingMode: WaitForFirstConsumer
+#    allowVolumeExpansion: true

@@ -1,0 +1,14 @@
+infrastructure:
+  annotations:
+    oci.oraclecloud.com/load-balancer-type: nlb
+
+listeners:
+  https-rakenaconz:
+    hostname: "*.rakena.co.nz"
+    certificateSecret: tls-rakena-co-nz
+  https-jacksonrakenacom:
+    hostname: "*.jacksonrakena.com"
+    certificateSecret: tls-jacksonrakena-com
+  # Catch-all: rakena.com.au hosts and anything else (e.g. api.gradekeeper.xyz).
+  https-rakenacomau:
+    certificateSecret: tls-rakena-com-au

@@ -1,0 +1,189 @@
+# Arthur cluster - every release, in dependency order.
+#
+# Tiers (select with `-l tier=<tier>`):
+#   platform  CRDs, namespaces, storage classes, operators, ingress controller.
+#             Cluster-critical: objects that hold or define data carry
+#             helm.sh/resource-policy: keep, so no release removal deletes them.
+#   secrets   the only release that reads environments/<env>/secrets.sops.yaml
+#   data      the shared volume and the Leode Postgres cluster (kept on uninstall)
+#   edge      the public Gateway
+#   apps      workloads in prod; each owns its own HTTPRoutes
+#
+# See README.md for usage (`make diff`, `make apply`).
+
+environments:
+  prod:
+    kubeContext: context-arthur-c6yotri3faq
+
+---
+
+helmDefaults:
+  # Wait for workloads to become ready before the next tier.
+  wait: true
+  timeout: 600
+  createNamespace: false   # namespaces belong to the cluster-config release
+
+repositories:
+  - name: cnpg
+    url: https://cloudnative-pg.github.io/charts
+  - name: traefik
+    url: https://traefik.github.io/charts
+  - name: tailscale
+    url: https://pkgs.tailscale.com/helmcharts
+  - name: authentik
+    url: https://charts.goauthentik.io
+
+templates:
+  app:
+    chart: ./charts/app
+    namespace: prod
+    labels:
+      tier: apps
+    values:
+      - values/{{`{{ .Release.Name }}`}}.yaml
+
+releases:
+  # ---------------------------------------------------------------- platform
+  - name: gateway-api-crds
+    namespace: kube-system
+    chart: ./charts/gateway-api-crds
+    labels:
+      tier: platform
+
+  - name: cluster-config
+    namespace: kube-system
+    chart: ./charts/cluster-config
+    labels:
+      tier: platform
+    values:
+      - values/cluster-config.yaml
+
+  - name: cnpg
+    namespace: cnpg-system
+    chart: cnpg/cloudnative-pg
+    version: 0.29.1          # operator 1.30.1
+    labels:
+      tier: platform
+    needs:
+      - kube-system/cluster-config
+    values:
+      - values/cnpg.yaml
+
+  - name: traefik
+    namespace: traefik
+    chart: traefik/traefik
+    version: 42.4.0          # Traefik v3.7.18
+    labels:
+      tier: platform
+    needs:
+      - kube-system/cluster-config
+      - kube-system/gateway-api-crds
+    values:
+      - values/traefik.yaml
+
+  # Vendored, with the keep policy. The operator chart's own CRDs have none, so
+  # uninstalling it would delete every Connector. Keep both on the same version.
+  - name: tailscale-crds
+    namespace: kube-system
+    chart: ./charts/tailscale-crds
+    labels:
+      tier: platform
+
+  - name: tailscale-operator
+    namespace: tailscale
+    chart: tailscale/tailscale-operator
+    version: 1.104.7         # match charts/tailscale-crds
+    labels:
+      tier: platform
+    needs:
+      - kube-system/cluster-config
+      - kube-system/tailscale-crds
+      - prod/secrets
+    values:
+      - values/tailscale-operator.yaml
+
+  - name: tailscale-config
+    namespace: tailscale
+    chart: ./charts/tailscale-config
+    labels:
+      tier: platform
+    needs:
+      - tailscale/tailscale-operator
+    values:
+      - values/tailscale-config.yaml
+
+  # ----------------------------------------------------------------- secrets
+  - name: secrets
+    namespace: prod
+    chart: ./charts/secrets
+    labels:
+      tier: secrets
+    needs:
+      - kube-system/cluster-config
+    values:
+      - values/secrets.yaml.gotmpl
+
+  # -------------------------------------------------------------------- data
+  - name: data
+    namespace: prod
+    chart: ./charts/data
+    labels:
+      tier: data
+    needs:
+      - cnpg-system/cnpg
+      - prod/secrets
+    values:
+      - values/data.yaml
+
+  # -------------------------------------------------------------------- edge
+  - name: gateway
+    namespace: prod
+    chart: ./charts/gateway
+    labels:
+      tier: edge
+    needs:
+      - traefik/traefik
+      - prod/secrets
+    values:
+      - values/gateway.yaml
+
+  # -------------------------------------------------------------------- apps
+  - name: vaultwarden
+    inherit:
+      - template: app
+    needs: [prod/gateway, prod/data]
+
+  - name: homarr
+    inherit:
+      - template: app
+    needs: [prod/gateway, prod/data, prod/vaultwarden]
+
+  - name: gradekeeper
+    inherit:
+      - template: app
+    needs: [prod/gateway, prod/data]
+
+  - name: mixer-api
+    inherit:
+      - template: app
+    needs: [prod/gateway, prod/data]
+
+  - name: mixer-frontend
+    inherit:
+      - template: app
+    needs: [prod/gateway]
+
+  - name: blank
+    inherit:
+      - template: app
+    needs: [prod/gateway]
+
+  - name: authentik
+    namespace: prod
+    chart: authentik/authentik
+    version: 2026.8.5
+    labels:
+      tier: apps
+    needs: [prod/gateway, prod/data]
+    values:
+      - values/authentik.yaml

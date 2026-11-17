@@ -1,0 +1,32 @@
+{{- if .Values.clusterAccess.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "app.name" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Namespace }}-{{ include "app.name" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+rules:
+  {{- toYaml .Values.clusterAccess.rules | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Namespace }}-{{ include "app.name" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-{{ include "app.name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "app.name" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

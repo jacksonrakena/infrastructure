@@ -1,0 +1,20 @@
+name: traefik-gateway
+gatewayClassName: traefik-gateway-class
+
+# Passed to whatever provisions this Gateway's infrastructure. Traefik serves
+# Gateways through its own LoadBalancer Service (see values/traefik.yaml), which
+# carries the same annotation; this is kept so the intent lives on the Gateway too.
+infrastructure:
+  annotations: {}
+
+# Traefik matches a listener to the entrypoint with the same *container* port,
+# so this is the websecure entrypoint port (8443), not the public 443.
+port: 8443
+
+# HTTPS listeners, keyed by listener name. hostname may be omitted for a
+# catch-all listener. certificateSecret is a kubernetes.io/tls Secret in this
+# namespace (created by the secrets release).
+listeners: {}
+#  https-example:
+#    hostname: "*.example.com"
+#    certificateSecret: tls-example-com

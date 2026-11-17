@@ -1,0 +1,5 @@
+apiVersion: v2
+name: data
+description: Stateful resources in prod - the shared data volume and the Leode CloudNativePG cluster with its roles and databases.
+type: application
+version: 1.0.0

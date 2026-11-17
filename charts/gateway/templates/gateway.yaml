@@ -1,0 +1,26 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.name }}
+spec:
+  gatewayClassName: {{ .Values.gatewayClassName }}
+  {{- with .Values.infrastructure }}
+  infrastructure:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  listeners:
+    {{- range $name, $l := .Values.listeners }}
+    - name: {{ $name }}
+      protocol: HTTPS
+      port: {{ $.Values.port }}
+      {{- with $l.hostname }}
+      hostname: {{ . | quote }}
+      {{- end }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ required (printf "listeners.%s.certificateSecret is required" $name) $l.certificateSecret }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- end }}

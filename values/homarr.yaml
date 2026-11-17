@@ -1,0 +1,43 @@
+# Uses the local app chart rather than homarr-labs/homarr: that chart can't mount
+# a subPath of an existing claim, which is where Homarr's data lives.
+# Pinned to the digest that was running at the Helm migration (2026-11-17).
+image: ghcr.io/homarr-labs/homarr@sha256:44c480afe9df57ce9de44cb664aec53199ea19926ebdd4e590c7b2c2c0a5ef79
+containerPort: 7575
+strategy:
+  type: Recreate
+envFromSecrets: [homarr-env]       # SECRET_ENCRYPTION_KEY
+env:
+  ENABLE_KUBERNETES: "true"
+volumes:
+  appdata:
+    persistentVolumeClaim:
+      claimName: arthur-global-data
+    mountPath: /appdata
+    subPath: homarr-appdata
+# arthur-global-data is ReadWriteOnce, so run on Vaultwarden's node.
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: vaultwarden
+routes:
+  home-route:
+    hostname: home.rakena.com.au
+# Read-only cluster access for Homarr's Kubernetes integration.
+clusterAccess:
+  enabled: true
+  rules:
+    - apiGroups: [""]
+      resources: [pods, services, nodes, namespaces, configmaps, secrets, persistentvolumes, persistentvolumeclaims]
+      verbs: [get, list, watch]
+    - apiGroups: [apps]
+      resources: [deployments, daemonsets, statefulsets]
+      verbs: [get, list, watch]
+    - apiGroups: [networking.k8s.io]
+      resources: [ingresses]
+      verbs: [get, list, watch]
+    - apiGroups: [metrics.k8s.io]
+      resources: [pods, nodes]
+      verbs: [get, list]

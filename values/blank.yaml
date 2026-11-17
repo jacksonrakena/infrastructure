@@ -1,0 +1,13 @@
+image: ghcr.io/jacksonrakena/blank:latest
+imagePullSecrets: [ghcr-pull]
+containerPort: 3000
+volumes:
+  targets:
+    configMap:
+      name: blank-targets
+    # Relative to the image's working directory, as Blank expects.
+    mountPath: targets.kdl
+    subPath: targets.kdl
+routes:
+  jacksonrakena-route:
+    hostname: go.jacksonrakena.com

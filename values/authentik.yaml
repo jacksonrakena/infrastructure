@@ -1,0 +1,26 @@
+authentik:
+  # All configuration comes from the authentik-env Secret (secrets release):
+  # AUTHENTIK_SECRET_KEY and the Leode credentials.
+  existingSecret:
+    secretName: authentik-env
+
+global:
+  env:
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      value: leode-rw
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      value: authentik
+    - name: AUTHENTIK_ERROR_REPORTING__ENABLED
+      value: "false"
+
+server:
+  route:
+    main:
+      enabled: true
+      hostnames:
+        - id.rakena.com.au
+      parentRefs:
+        - name: traefik-gateway
+
+postgresql:
+  enabled: false

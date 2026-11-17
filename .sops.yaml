@@ -1,0 +1,7 @@
+# Encryption rules for SOPS. Every value in a matching file is encrypted to the
+# age recipients below; keys stay readable so diffs show what changed.
+# Add a recipient (and run `sops updatekeys <file>`) to grant another key access.
+creation_rules:
+  - path_regex: environments/[^/]+/secrets\.sops\.yaml$
+    age: >-
+      age1c9f5hjudgh76gw60kcpdxep5rvd9cx2gvk8hj8z77xd476gzjfcq5e9qwg

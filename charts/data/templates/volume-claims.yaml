@@ -1,0 +1,18 @@
+{{- range $name, $pvc := .Values.volumeClaims }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ required "storageClassName is required" $pvc.storageClassName }}
+  {{- with $pvc.volumeName }}
+  volumeName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ required "size is required" $pvc.size }}
+{{- end }}

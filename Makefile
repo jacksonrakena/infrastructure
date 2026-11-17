@@ -1,16 +1,34 @@
-.PHONY: kube build diff apply
+# Arthur cluster. Everything is a helmfile release; see helmfile.yaml.gotmpl.
+#
+#   make diff                    preview every release against the cluster
+#   make diff SELECTOR=tier=apps preview a subset (any helmfile selector)
+#   make apply                   install/upgrade every release, in dependency order
+#   make apply SELECTOR=name=mixer-api
+#   make secrets                 edit the encrypted secrets file in $EDITOR
+#   make objects                 list every rendered object (no contents)
+#   make lint
 
-# Synthesise dist/platform, dist/data and dist/prod.
-build:
-	@echo "Building Kubernetes manifest..."
-	@npm run build
+ENV ?= prod
+SELECTOR ?=
+HELMFILE := helmfile -e $(ENV)
+SELECT := $(if $(SELECTOR),-l $(SELECTOR),)
 
-kube: build
+.PHONY: repos lint objects diff apply secrets
 
-# Show what would change on the cluster, including prod objects that would be pruned.
-diff: build
-	@scripts/kube-apply.sh diff
+repos:
+	@$(HELMFILE) repos
 
-# Apply all layers. Pruning anything requires CONFIRM_PRUNE=1.
-apply: build
-	@scripts/kube-apply.sh apply
+lint: repos
+	@$(HELMFILE) $(SELECT) lint
+
+objects: repos
+	@$(HELMFILE) $(SELECT) template --skip-tests -q | python3 -I scripts/summarise-manifest.py
+
+diff: repos
+	@scripts/diff.sh $(SELECTOR)
+
+apply: repos
+	@$(HELMFILE) $(SELECT) sync
+
+secrets:
+	@sops environments/$(ENV)/secrets.sops.yaml

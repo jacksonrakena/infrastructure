@@ -1,0 +1,6 @@
+# Tailscale Connectors (subnet routers, exit nodes, app connectors), keyed by name.
+# Spec reference: https://tailscale.com/kb/1441/kubernetes-operator-connector
+connectors: {}
+#  mel-arthur-exit:
+#    exitNode: true
+#    replicas: 1

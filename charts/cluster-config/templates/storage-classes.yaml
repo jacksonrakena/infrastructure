@@ -1,0 +1,17 @@
+{{- range $name, $sc := .Values.storageClasses }}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $name }}
+  annotations:
+    helm.sh/resource-policy: keep
+provisioner: {{ required "provisioner is required" $sc.provisioner }}
+{{- with $sc.parameters }}
+parameters:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+reclaimPolicy: {{ $sc.reclaimPolicy | default "Delete" }}
+volumeBindingMode: {{ $sc.volumeBindingMode | default "WaitForFirstConsumer" }}
+allowVolumeExpansion: {{ $sc.allowVolumeExpansion | default false }}
+{{- end }}

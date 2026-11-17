@@ -1,0 +1,27 @@
+# Shared ReadWriteOnce block volumes, keyed by claim name. Kept on uninstall.
+# volumeName binds the claim to an existing PersistentVolume.
+volumeClaims: {}
+#  arthur-global-data:
+#    storageClassName: oci-free
+#    size: 50Gi
+#    volumeName: csi-...
+
+# The Leode CloudNativePG cluster. Kept on uninstall: deleting the Cluster
+# resource deletes its instances and, with a Delete reclaim policy, their data.
+leode:
+  enabled: true
+  name: leode
+  # Pin the Postgres image so operator upgrades don't change it implicitly.
+  imageName: ""
+  instances: 1
+  storage:
+    storageClass: ""
+    size: 50Gi
+  enablePodMonitor: false
+  # Managed login roles. Each password comes from the basic-auth Secret
+  # `<rolePasswordSecretPrefix><role>`, created by the secrets release.
+  rolePasswordSecretPrefix: leode-role-
+  roles: []
+  # One database per entry, owned by the role of the same name. CloudNativePG
+  # retains the database in Postgres if its Database resource is deleted.
+  databases: []

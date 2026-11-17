@@ -1,0 +1,17 @@
+image: ghcr.io/jacksonrakena/gradekeeper-server:latest
+imagePullSecrets: [ghcr-pull]
+replicas: 2
+containerPort: 3000
+envFromSecrets: [gradekeeper-env]
+env:
+  DATABASE_NAME: gradekeeper
+  DATABASE_HOST: leode-rw
+secretEnv:
+  DATABASE_USERNAME: { secret: leode-role-gradekeeper, key: username }
+  DATABASE_PASSWORD: { secret: leode-role-gradekeeper, key: password }
+livenessProbe:
+  httpGet: { path: /health, port: http }
+  initialDelaySeconds: 10
+routes:
+  gradekeeper-route:
+    hostname: api.gradekeeper.xyz

@@ -1,8 +1,8 @@
 **/.DS_Store
-**/secrets
 **/.idea
-dist
-node_modules
-build
-imports
-dist-main
+# Legacy plaintext secrets from the cdk8s build. Secrets now live encrypted in
+# environments/<env>/secrets.sops.yaml; never commit this folder.
+**/secrets/
+# Rendered manifests from the old cdk8s build (contain plaintext Secrets).
+dist/
+dist-*/

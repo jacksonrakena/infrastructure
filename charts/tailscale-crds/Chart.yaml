@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tailscale-crds
+description: Tailscale operator CRDs, vendored from the tailscale-operator chart of the same version.
+type: application
+version: 1.104.7
+appVersion: v1.104.7

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gateway-api-crds
+description: Gateway API standard-channel CRDs, vendored from the upstream release bundle.
+type: application
+version: 1.6.1
+appVersion: v1.6.1
