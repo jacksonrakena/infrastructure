@@ -64,7 +64,6 @@ I do not intend for this repository to be used by anyone else (but feel free to 
 | `environments/prod/secrets.sops.yaml` | Every secret, encrypted with [SOPS](https://github.com/getsops/sops) + [age](https://age-encryption.org) |
 | `charts/` | Local charts: `app` (generic web app), `data`, `secrets`, `gateway`, `cluster-config`, `gateway-api-crds`, `tailscale-crds`, `tailscale-config` |
 | `scripts/diff.sh` | Previews changes against the cluster (`make diff`) |
-| `docs/helm-cutover.md` | One-off runbook for the migration from the old cdk8s manifests |
 
 ## Releases
 
