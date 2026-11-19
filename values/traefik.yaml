@@ -22,7 +22,17 @@ gatewayClass:
 gateway:
   enabled: false
 
+# The API (and dashboard) on the internal "traefik" entrypoint (:8080), published
+# only on the ClusterIP Service traefik-internal below, never on the NLB. Used by
+# Homarr's Traefik widget.
+api:
+  insecure: true
+
 ports:
+  traefik:
+    expose:
+      default: false
+      internal: true
   # The web entrypoint stays internal: there is no plain-HTTP listener.
   web:
     expose:
@@ -35,6 +45,10 @@ ports:
     nodePort: 32700
 
 service:
+  additionalServices:
+    internal:
+      spec:
+        type: ClusterIP
   annotations:
     oci.oraclecloud.com/load-balancer-type: nlb
   spec:
