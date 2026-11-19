@@ -17,10 +17,11 @@ env:
   AUTH_OIDC_ISSUER: https://id.rakena.com.au/application/o/home/
   AUTH_OIDC_CLIENT_NAME: Authentik
   AUTH_OIDC_SCOPE_OVERWRITE: openid email profile
-  # Authentik's default profile scope sends group names in the "groups" claim.
+  # Authentik's default profile scope sends group names in this claim. At each
+  # login Homarr adds the user to every *existing* Homarr group with a matching
+  # name (it never creates groups). Homarr's built-in admin group
+  # (credentials-admin) is renamed "authentik Admins" to match Authentik's.
   AUTH_OIDC_GROUPS_ATTRIBUTE: groups
-  # Members of Authentik's admin group are Homarr admins.
-  AUTH_OIDC_ADMIN_GROUP: authentik Admins
   AUTH_OIDC_AUTO_LOGIN: "false"
 volumes:
   appdata:
