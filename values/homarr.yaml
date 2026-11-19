@@ -5,9 +5,21 @@ image: ghcr.io/homarr-labs/homarr:v2.13.1@sha256:7b3ab85bad2656be6c940b9d2611725
 containerPort: 7575
 strategy:
   type: Recreate
-envFromSecrets: [homarr-env]       # SECRET_ENCRYPTION_KEY
+envFromSecrets:
+  - homarr-env       # SECRET_ENCRYPTION_KEY
+  - homarr-oidc      # AUTH_OIDC_CLIENT_ID / AUTH_OIDC_CLIENT_SECRET
 env:
   ENABLE_KUBERNETES: "true"
+  # Sign in with Authentik (application "home"), keeping local logins as a
+  # fallback. Authentik's provider redirect URI must be
+  # https://home.rakena.com.au/api/auth/callback/oidc
+  AUTH_PROVIDERS: credentials,oidc
+  AUTH_OIDC_ISSUER: https://id.rakena.com.au/application/o/home/
+  AUTH_OIDC_CLIENT_NAME: Authentik
+  AUTH_OIDC_SCOPE_OVERWRITE: openid email profile
+  # Authentik's default profile scope sends group names in the "groups" claim.
+  AUTH_OIDC_GROUPS_ATTRIBUTE: groups
+  AUTH_OIDC_AUTO_LOGIN: "false"
 volumes:
   appdata:
     persistentVolumeClaim:
