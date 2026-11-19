@@ -10,15 +10,17 @@ envFromSecrets:
   - homarr-oidc      # AUTH_OIDC_CLIENT_ID / AUTH_OIDC_CLIENT_SECRET
 env:
   ENABLE_KUBERNETES: "true"
-  # Sign in with Authentik (application "home"), keeping local logins as a
-  # fallback. Authentik's provider redirect URI must be
+  # Sign in with Authentik only (application "home"); local username/password
+  # logins are disabled. Authentik's provider redirect URI must be
   # https://home.rakena.com.au/api/auth/callback/oidc
-  AUTH_PROVIDERS: credentials,oidc
+  AUTH_PROVIDERS: oidc
   AUTH_OIDC_ISSUER: https://id.rakena.com.au/application/o/home/
   AUTH_OIDC_CLIENT_NAME: Authentik
   AUTH_OIDC_SCOPE_OVERWRITE: openid email profile
   # Authentik's default profile scope sends group names in the "groups" claim.
   AUTH_OIDC_GROUPS_ATTRIBUTE: groups
+  # Members of Authentik's admin group are Homarr admins.
+  AUTH_OIDC_ADMIN_GROUP: authentik Admins
   AUTH_OIDC_AUTO_LOGIN: "false"
 volumes:
   appdata:
