@@ -1,7 +1,7 @@
 # Uses the local app chart rather than homarr-labs/homarr: that chart can't mount
 # a subPath of an existing claim, which is where Homarr's data lives.
-# Pinned to the digest that was running at the Helm migration (2026-11-17).
-image: ghcr.io/homarr-labs/homarr@sha256:44c480afe9df57ce9de44cb664aec53199ea19926ebdd4e590c7b2c2c0a5ef79
+# Tag for readability, digest so the image can't change under the tag.
+image: ghcr.io/homarr-labs/homarr:v2.13.1@sha256:7b3ab85bad2656be6c940b9d26117254edb6d998aeb5b66dfdc795f2e737802a
 containerPort: 7575
 strategy:
   type: Recreate
